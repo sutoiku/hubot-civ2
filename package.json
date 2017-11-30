@@ -1,0 +1,41 @@
+{
+  "name": "hubot-civ2",
+  "description": "A hubot scripts that pilots civ2 tasks",
+  "version": "0.0.0",
+  "author": "Yan <yan.corneille@gmail.com>",
+  "license": "MIT",
+  "keywords": [
+    "hubot",
+    "stoic",
+    "internal",
+    "civ2"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/hubot-scripts/hubot-civ2.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hubot-scripts/hubot-civ2/issues"
+  },
+  "dependencies": {
+    "coffee-script": "~1.6",
+    "jenkins": "^0.20.1"
+  },
+  "devDependencies": {
+    "chai": "*",
+    "grunt": "^1.0.1",
+    "grunt-cli": "^1.2.0",
+    "grunt-contrib-watch": "~0.5.3",
+    "grunt-mocha-test": "~0.7.0",
+    "grunt-release": "~0.6.0",
+    "matchdep": "~0.1.2",
+    "mocha": "*",
+    "nock": "^9.1.3",
+    "sinon": "*",
+    "sinon-chai": "*"
+  },
+  "main": "index.coffee",
+  "scripts": {
+    "test": "grunt test"
+  }
+}
