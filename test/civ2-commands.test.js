@@ -18,7 +18,7 @@ describe('civ2', function() {
           .reply(200,{"crumb":"fb171d526b9cc9e25afe80b356e12cb7","crumbRequestField":".crumb"});
 
       nock(`https://${process.env.HUBOT_JENKINS_AUTH}@${process.env.HUBOT_JENKINS_URL}`)
-        .post('/job/Deployment/job/test-job/build')
+        .post('/job/Deployment/job/ci-v1/build')
         .reply(200, 'ok');
        civ2.deployV1().then((response)=>{
           expect(response.body.toString()).to.equal('ok');
