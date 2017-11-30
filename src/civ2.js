@@ -15,7 +15,7 @@
 const civ2 = require('./civ2-commands');
 module.exports = function(robot) {
 
-  return robot.hear(/civ2 deploy-civ1/, () => {
+  return robot.hear(/civ2 deploy-civ1/, (msg) => {
     civ2.deployV1().then((response) => {
       msg.reply(`OK, the deployment #${response} is in progress.`);
     }).catch((err) => {
