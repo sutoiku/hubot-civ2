@@ -1,5 +1,8 @@
 const chai = require('chai');
 const sinon = require('sinon');
+const Helper = require('hubot-test-helper')
+const helper = new Helper('./../src/civ2.js')
+
 chai.use(require('sinon-chai'));
 
 const {
@@ -7,6 +10,9 @@ const {
 } = chai;
 
   describe("hubot integration", () => {
+    describe('register', ()=>{
+
+
     beforeEach(function() {
       this.robot = {
         respond: sinon.spy(),
@@ -17,6 +23,8 @@ const {
     });
 
     it('registers a hear listener', function() {
-      expect(this.robot.hear).to.have.been.calledWith(/civ2 deploy-civ1/);
+      expect(this.robot.hear).to.have.been.calledWith(/deploy to civ1 ?(\S*)/);
     });
+  });
+
 });

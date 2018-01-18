@@ -28,6 +28,7 @@
     "grunt-contrib-watch": "~0.5.3",
     "grunt-mocha-test": "~0.7.0",
     "grunt-release": "~0.6.0",
+    "hubot-test-helper": "^1.8.1",
     "matchdep": "~0.1.2",
     "mocha": "*",
     "nock": "^9.1.3",
