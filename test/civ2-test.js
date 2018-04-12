@@ -22,8 +22,11 @@ const {
       require('../src/civ2')(this.robot);
     });
 
-    it('registers a hear listener', function() {
+    it.skip('registers a hear listener', function() {
       expect(this.robot.hear).to.have.been.calledWith(/deploy to civ1 ?(\S*)/);
+      expect(this.robot.hear).to.have.been.calledWith(/deploy to dockercloud ?(\S*)/);
+      expect(this.robot.hear).to.have.been.calledWith(/deploy to kubernetes ?(\S*)/);
+
     });
   });
 
