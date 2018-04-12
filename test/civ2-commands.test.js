@@ -50,7 +50,7 @@ describe('civ2', function() {
   });
 
   describe('Task civ1', () => {
-    it('calls Jenkins', (done) => {
+    it('calls the right Jenkins job', (done) => {
       process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
       process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tld';
       civ2 = require('../src/civ2-commands.js');
@@ -91,11 +91,52 @@ describe('civ2', function() {
         })
         .catch(done);
     });
-
-
-
-
   });
+
+
+    describe('Task Docker', () => {
+      it('calls the right Jenkins job', (done) => {
+        process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
+        process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tld';
+        civ2 = require('../src/civ2-commands.js');
+        nock(`https://${process.env.HUBOT_JENKINS_URL}`)
+          .get('/crumbIssuer/api/json')
+          .reply(200, {
+            "crumb": "fb171d526b9cc9e25afe80b356e12cb7",
+            "crumbRequestField": ".crumb"
+          });
+
+        nock(`https://${process.env.HUBOT_JENKINS_AUTH}@${process.env.HUBOT_JENKINS_URL}`)
+          .post('/job/Deployment/job/marcus-to-docker-cloud/build')
+          .reply(200, 'ok');
+        civ2.deployDocker().then((response) => {
+            expect(response.body.toString()).to.equal('ok');
+            done();
+          })
+          .catch(done);
+      });
+
+      it('passes tag if present', (done) => {
+        process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
+        process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tld';
+        civ2 = require('../src/civ2-commands.js');
+        nock(`https://${process.env.HUBOT_JENKINS_URL}`)
+          .get('/crumbIssuer/api/json')
+          .reply(200, {
+            "crumb": "fb171d526b9cc9e25afe80b356e12cb7",
+            "crumbRequestField": ".crumb"
+          });
+
+        nock(`https://${process.env.HUBOT_JENKINS_AUTH}@${process.env.HUBOT_JENKINS_URL}`)
+          .post('/job/Deployment/job/marcus-to-docker-cloud/buildWithParameters?tag=pouet')
+          .reply(200, 'ok');
+        civ2.deployDocker('pouet').then((response) => {
+            expect(response.body.toString()).to.equal('ok');
+            done();
+          })
+          .catch(done);
+      });
+    });
   afterEach(() => {
     nock.cleanAll();
     delete process.env.HUBOT_JENKINS_AUTH;
