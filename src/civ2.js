@@ -5,8 +5,8 @@
 //   HUBOT_JENKINS_AUTH, HUBOT_JENKINS_URL
 //
 // Commands:
-//   deploy to civ1 - deploys the latest "release-candidate" image to civ1
-//   deploy to civ1 <tag> - deploys a specifig image to civ1
+//   deploy to civ1 <optional tag> - deploys the specified image:tag to civ1. (default tag : release-candidate)
+//   deploy to docker <optional tag> - deploys the specified image:tag to docker. (default tag : release-candidate)
 //
 // Notes:
 //   <optional notes required for the script>
