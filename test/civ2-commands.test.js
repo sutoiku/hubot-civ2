@@ -107,7 +107,7 @@ describe('civ2', function() {
           });
 
         nock(`https://${process.env.HUBOT_JENKINS_AUTH}@${process.env.HUBOT_JENKINS_URL}`)
-          .post('/job/Deployment/job/marcus-to-docker-cloud/build')
+          .post('/job/Release/job/marcus-to-docker-cloud/build')
           .reply(200, 'ok');
         civ2.deployDocker().then((response) => {
             expect(response.body.toString()).to.equal('ok');
@@ -128,7 +128,7 @@ describe('civ2', function() {
           });
 
         nock(`https://${process.env.HUBOT_JENKINS_AUTH}@${process.env.HUBOT_JENKINS_URL}`)
-          .post('/job/Deployment/job/marcus-to-docker-cloud/buildWithParameters?tag=pouet')
+          .post('/job/Release/job/marcus-to-docker-cloud/buildWithParameters?tag=pouet')
           .reply(200, 'ok');
         civ2.deployDocker('pouet').then((response) => {
             expect(response.body.toString()).to.equal('ok');
@@ -152,7 +152,7 @@ describe('civ2', function() {
               });
 
             nock(`https://${process.env.HUBOT_JENKINS_AUTH}@${process.env.HUBOT_JENKINS_URL}`)
-              .post('/job/Deployment/job/marcus-to-kubernetes/build')
+              .post('/job/Release/job/marcus-to-kubernetes/build')
               .reply(200, 'ok');
             civ2.deployK8s().then((response) => {
                 expect(response.body.toString()).to.equal('ok');
@@ -173,7 +173,7 @@ describe('civ2', function() {
               });
 
             nock(`https://${process.env.HUBOT_JENKINS_AUTH}@${process.env.HUBOT_JENKINS_URL}`)
-              .post('/job/Deployment/job/marcus-to-kubernetes/buildWithParameters?tag=pouet')
+              .post('/job/Release/job/marcus-to-kubernetes/buildWithParameters?tag=pouet')
               .reply(200, 'ok');
             civ2.deployK8s('pouet').then((response) => {
                 expect(response.body.toString()).to.equal('ok');

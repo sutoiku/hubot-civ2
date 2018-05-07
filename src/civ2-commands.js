@@ -3,10 +3,10 @@ exports.deployV1 = function(tag) {
 };
 
 exports.deployDocker = function(tag) {
-  return buildJob("Deployment/marcus-to-docker-cloud", tag);
+  return buildJob("Release/marcus-to-docker-cloud", tag);
 };
 exports.deployK8s = function(tag) {
-  return buildJob("Deployment/marcus-to-kubernetes", tag);
+  return buildJob("Release/marcus-to-kubernetes", tag);
 };
 
 function buildJob(name, tag) {
