@@ -7,7 +7,8 @@
 // Commands:
 //   deploy to civ1 <optional tag> - deploys the specified image:tag to civ1. (default tag : release-candidate)
 //   deploy to dockercloud <optional tag> - deploys the specified image:tag to docker. (default tag : release-candidate)
-//   deploy to kubernetes <optional tag> - deploys the specified image:tag to docker. (default tag : release-candidate)
+//   deploy to kubernetes <optional tag> - deploys the specified image:tag to kuberentes dev cluster. (default tag : release-candidate)
+//   release stoic : releases the latest release-candidate in the wild.
 //
 // Notes:
 //   <optional notes required for the script>
@@ -38,4 +39,14 @@ module.exports = function(robot) {
         });
     });
   }
+  robot.hear("release stoic", msg => {
+    civ2
+      .release()
+      .then(() => {
+        msg.reply("Release in progress.");
+      })
+      .catch(err => {
+        msg.reply(`Sorry, something went wrong: ${err.message}`);
+      });
+  });
 };

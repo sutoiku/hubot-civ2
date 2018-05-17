@@ -9,6 +9,10 @@ exports.deployK8s = function(tag) {
   return buildJob("Release/marcus-to-kubernetes", tag);
 };
 
+exports.release = function(tag) {
+  return buildJob("Release/global-release", tag);
+};
+
 function buildJob(name, tag) {
   const baseUrl = getBaseUrl();
   const jenkins = require("jenkins")({
