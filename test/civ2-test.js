@@ -18,8 +18,8 @@ describe("hubot integration", () => {
       require("../src/civ2")(this.robot);
     });
 
-    it("registers 4 listeners", function() {
-      expect(this.robot.hear).to.have.callCount(4);
+    it("registers 5 listeners", function() {
+      expect(this.robot.hear).to.have.callCount(5);
     });
     it("registers a civ1 listener", function() {
       expect(this.robot.hear.getCall(0).args[0].toString()).to.equal(
@@ -41,5 +41,12 @@ describe("hubot integration", () => {
         '/release stoic (\\S*)/'
       );
     });
+    it("registers a rollback listener", function() {
+      expect(this.robot.hear.getCall(4).args[0].toString()).to.equal(
+        '/rollback stoic (\\S*)/'
+      );
+    });
+
+
   });
 });
