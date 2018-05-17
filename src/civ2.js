@@ -39,9 +39,10 @@ module.exports = function(robot) {
         });
     });
   }
-  robot.hear("release stoic", msg => {
+  robot.hear(/release stoic (\S*)/, msg => {
+    const tag = msg.match[1]
     civ2
-      .release()
+      .release(tag)
       .then(() => {
         msg.reply("Release in progress.");
       })

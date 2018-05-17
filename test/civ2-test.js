@@ -38,7 +38,7 @@ describe("hubot integration", () => {
     });
     it("registers a release listener", function() {
       expect(this.robot.hear.getCall(3).args[0].toString()).to.equal(
-        'release stoic'
+        '/release stoic (\\S*)/'
       );
     });
   });
