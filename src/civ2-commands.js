@@ -1,3 +1,10 @@
+const rp = require('request-promise');
+const CI_API_ROOT = process.env.CI_API_ROOT;
+const token = process.env.CI_API_AUTH;
+const headers = {
+  Authorization: `Basic ${token}`
+};
+
 exports.deployV1 = function(tag) {
   return buildJob("Deployment/ci-v1", tag);
 };
@@ -20,6 +27,11 @@ exports.updateBot = function() {
   return buildJob("Chore/hubot/stoic-hubot/master");
 };
 
+exports.archive = function(repo, branch){
+  const encodedBranch = encodeURIComponent(branch);
+  const url = `${CI_API_ROOT}archive/${repo}/${encodedBranch}`;
+  return rp(url, {headers  });
+}
 function buildJob(name, tag, additionalParameters) {
   const baseUrl = getBaseUrl();
   const jenkins = require("jenkins")({

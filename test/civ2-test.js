@@ -24,12 +24,21 @@ describe("hubot integration", () => {
     it("registers 6 listeners", function() {
       expect(this.robot.hear).to.have.callCount(6);
     });
+    it("registers 1 responder", function() {
+      expect(this.robot.respond).to.have.callCount(1);
+    });
 
 
     it("registers 1 webhook", function() {
       expect(this.robot.router.post).to.have.callCount(1);
     });
 
+
+    it("registers an archive responder", function() {
+      expect(this.robot.respond.getCall(0).args[0].toString()).to.equal(
+        "/archive (\\S*) (\\S*)/"
+      );
+    });
 
     it("registers a civ1 listener", function() {
       expect(this.robot.hear.getCall(0).args[0].toString()).to.equal(

@@ -8,8 +8,9 @@
 //   deploy to civ1 <optional tag> - deploys the specified image:tag to civ1. (default tag : release-candidate)
 //   deploy to dockercloud <optional tag> - deploys the specified image:tag to docker. (default tag : release-candidate)
 //   deploy to kubernetes <optional tag> - deploys the specified image:tag to kuberentes dev cluster. (default tag : release-candidate)
-//   release stoic <version> : releases <version> in the wild.
-//   roolback stoic <version> : rollback to stoic >version>
+//   release stoic <version> - releases <version> in the wild.
+//   roolback stoic <version> - rollback to stoic >version>
+//   archive <repository> <branch>
 //
 // Notes:
 //   <optional notes required for the script>
@@ -77,13 +78,60 @@ module.exports = function(robot) {
       });
   });
 
+  robot.respond(/archive (\S*) (\S*)/, msg => {
+    const repo = msg.match[1],
+      branch = msg.match[2];
+    console.log(`repo: ${repo}, branch:${branch}`);
+    civ2
+      .archive(repo, branch)
+      .then(body => {
+        const bodyContent = JSON.parse(body);
+        if (bodyContent === "ok") {
+          return msg.send(
+            `<https://github/com/sutoiku/${repo}/branches|Branch> ${branch} is now renamed archive/${branch}.`
+          );
+        }
+        msg.send(
+          `Hum, something unexpected happened. You'd better <https://github.com/sutoiku/${repo}/branches|check on github>.`
+        );
+      })
+      .catch(err => {
+        msg.send(
+          `An error occured while renaming ${branch} to archive/${branch}. ${
+            err.message
+          }`
+        );
+      });
+  });
+
   robot.router.post("/hubot/civ2/github-webhook", (req, res) => {
     const room = "#testing-ci";
     const data =
       req.body.payload != null ? JSON.parse(req.body.payload) : req.body;
     const prMerge = gh.getPRMerge(data);
     if (prMerge) {
-      robot.messageRoom(room, prMerge);
+      civ2
+        .archive(repo, branch)
+        .then(body => {
+          const bodyContent = JSON.parse(body);
+          if (bodyContent === "ok") {
+            robot.messageRoom(
+              room,
+              `<https://github/com/sutoiku/${repo}/branches|Branch> ${branch} is now archived as archive/${branch}.`
+            );
+          }
+          robot.messageRoom(
+            room,
+            `Hum, something unexpected happened. You'd better <https://github.com/sutoiku/${repo}/branches|check on github>.`
+          );
+        })
+        .catch(err => {
+          msg.send(
+            `An error occured while renaming ${branch} to archive/${branch}. ${
+              err.message
+            }`
+          );
+        });
     }
     return res.send("OK");
   });

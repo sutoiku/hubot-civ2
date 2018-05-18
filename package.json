@@ -19,7 +19,9 @@
   },
   "dependencies": {
     "coffee-script": "~1.6",
-    "jenkins": "^0.20.1"
+    "jenkins": "^0.20.1",
+    "request": "^2.86.0",
+    "request-promise": "^4.2.2"
   },
   "devDependencies": {
     "chai": "*",
