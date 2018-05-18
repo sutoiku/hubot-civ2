@@ -17,7 +17,7 @@
 // Author:
 //   Yan[@sutoiku.com>]
 const civ2 = require("./civ2-commands");
-const gh = require("./github").getPRMerge;
+const gh = require("./github");
 
 module.exports = function(robot) {
   const targets = [
