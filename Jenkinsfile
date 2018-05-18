@@ -4,7 +4,7 @@ node('v2-slave'){
   }
 
   stage ('Install dependencies'){
-    sh('npm i')  
+    sh('npm i')
   }
 
   stage ('Test'){
@@ -12,6 +12,6 @@ node('v2-slave'){
   }
 
   stage('Trigger hubot build'){
-    //TODO
+    build job:'Chore/hubot/stoic-hubot/master'
   }
 }
