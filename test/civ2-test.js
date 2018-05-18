@@ -12,7 +12,10 @@ describe("hubot integration", () => {
     beforeEach(function() {
       this.robot = {
         respond: sinon.spy(),
-        hear: sinon.spy()
+        hear: sinon.spy(),
+        router: {
+          post: sinon.spy()
+        }
       };
 
       require("../src/civ2")(this.robot);
@@ -23,30 +26,28 @@ describe("hubot integration", () => {
     });
     it("registers a civ1 listener", function() {
       expect(this.robot.hear.getCall(0).args[0].toString()).to.equal(
-        '/deploy to civ1 ?(S*)/'
+        "/deploy to civ1 ?(S*)/"
       );
     });
     it("registers a dockercloud listener", function() {
       expect(this.robot.hear.getCall(1).args[0].toString()).to.equal(
-        '/deploy to dockercloud ?(S*)/'
+        "/deploy to dockercloud ?(S*)/"
       );
     });
     it("registers a kubernetes listener", function() {
       expect(this.robot.hear.getCall(2).args[0].toString()).to.equal(
-        '/deploy to kubernetes ?(S*)/'
+        "/deploy to kubernetes ?(S*)/"
       );
     });
     it("registers a release listener", function() {
       expect(this.robot.hear.getCall(3).args[0].toString()).to.equal(
-        '/release stoic (\\S*)/'
+        "/release stoic (\\S*)/"
       );
     });
     it("registers a rollback listener", function() {
       expect(this.robot.hear.getCall(4).args[0].toString()).to.equal(
-        '/rollback stoic (\\S*)/'
+        "/rollback stoic (\\S*)/"
       );
     });
-
-
   });
 });

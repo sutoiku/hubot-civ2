@@ -17,6 +17,8 @@
 // Author:
 //   Yan[@sutoiku.com>]
 const civ2 = require("./civ2-commands");
+const gh = require("./github").getPRMerge;
+
 module.exports = function(robot) {
   const targets = [
     { trigger: "civ1", method: civ2.deployV1 },
@@ -41,7 +43,7 @@ module.exports = function(robot) {
     });
   }
   robot.hear(/release stoic (\S*)/, msg => {
-    const tag = msg.match[1]
+    const tag = msg.match[1];
     civ2
       .release(tag, true)
       .then(() => {
@@ -52,9 +54,8 @@ module.exports = function(robot) {
       });
   });
 
-
   robot.hear(/rollback stoic (\S*)/, msg => {
-    const tag = msg.match[1]
+    const tag = msg.match[1];
     civ2
       .release(tag, false)
       .then(() => {
@@ -65,5 +66,14 @@ module.exports = function(robot) {
       });
   });
 
-
+  robot.router.post("/hubot/civ2/github-webhook", (req, res) => {
+    const room = "#testing-ci";
+    const data =
+      req.body.payload != null ? JSON.parse(req.body.payload) : req.body;
+    const prMerge = gh.getPRMerge(data);
+    if (prMerge) {
+      robot.messageRoom(room, prMerge);
+    }
+    return res.send("OK");
+  });
 };
