@@ -12,6 +12,8 @@ node('v2-slave'){
   }
 
   stage('Trigger hubot build'){
-    build job:'Chore/hubot/stoic-hubot/master'
+    if(env.BRANCH_NAME=='master'){
+      build job:'Chore/hubot/stoic-hubot/master'
+    }
   }
 }
