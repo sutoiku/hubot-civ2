@@ -21,9 +21,16 @@ describe("hubot integration", () => {
       require("../src/civ2")(this.robot);
     });
 
-    it("registers 5 listeners", function() {
-      expect(this.robot.hear).to.have.callCount(5);
+    it("registers 6 listeners", function() {
+      expect(this.robot.hear).to.have.callCount(6);
     });
+
+
+    it("registers 1 webhook", function() {
+      expect(this.robot.router.post).to.have.callCount(1);
+    });
+
+
     it("registers a civ1 listener", function() {
       expect(this.robot.hear.getCall(0).args[0].toString()).to.equal(
         "/deploy to civ1 ?(S*)/"
@@ -49,5 +56,12 @@ describe("hubot integration", () => {
         "/rollback stoic (\\S*)/"
       );
     });
+
+    it("registers a self-update", function() {
+      expect(this.robot.hear.getCall(5).args[0].toString()).to.equal(
+        "/update yourself please/"
+      );
+    });
+
   });
 });

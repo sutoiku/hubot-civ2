@@ -66,6 +66,17 @@ module.exports = function(robot) {
       });
   });
 
+  robot.hear(/update yourself please/, msg => {
+    civ2
+      .updateBot()
+      .then(() => {
+        msg.reply("I'm now refreshing myself, master.");
+      })
+      .catch(err => {
+        msg.reply(`Sorry, something went wrong: ${err.message}`);
+      });
+  });
+
   robot.router.post("/hubot/civ2/github-webhook", (req, res) => {
     const room = "#testing-ci";
     const data =
