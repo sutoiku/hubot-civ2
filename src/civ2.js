@@ -115,7 +115,7 @@ module.exports = function(robot) {
         .then(body => {
           const bodyContent = JSON.parse(body);
           if (bodyContent === "ok") {
-            robot.messageRoom(
+            return robot.messageRoom(
               room,
               `<https://github/com/sutoiku/${prMerge.repo}/branches|Branch> ${prMerge.branch} is now archived as archive/${prMerge.branch}.`
             );
