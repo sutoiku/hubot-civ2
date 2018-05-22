@@ -111,25 +111,24 @@ module.exports = function(robot) {
     const prMerge = gh.getPRMerge(data);
     if (prMerge) {
       civ2
-        .archive(repo, branch)
+        .archive(prMerge.repo, prMerge.branch)
         .then(body => {
           const bodyContent = JSON.parse(body);
           if (bodyContent === "ok") {
             robot.messageRoom(
               room,
-              `<https://github/com/sutoiku/${repo}/branches|Branch> ${branch} is now archived as archive/${branch}.`
+              `<https://github/com/sutoiku/${prMerge.repo}/branches|Branch> ${prMerge.branch} is now archived as archive/${prMerge.branch}.`
             );
           }
           robot.messageRoom(
             room,
-            `Hum, something unexpected happened. You'd better <https://github.com/sutoiku/${repo}/branches|check on github>.`
+            `Hum, something unexpected happened. You'd better <https://github.com/sutoiku/${prMerge.repo}/branches|check on github>.`
           );
         })
         .catch(err => {
           msg.send(
-            `An error occured while renaming ${branch} to archive/${branch}. ${
-              err.message
-            }`
+            `An error occured while renaming branch ${prMerge.branch} of ${prMerge.repo} into archive/${prMerge.branch}.
+             ${err.message}`
           );
         });
     }

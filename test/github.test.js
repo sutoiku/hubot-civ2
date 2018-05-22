@@ -14,6 +14,6 @@ describe("github", () => {
 
   it("identifies pr closings", () => {
     const prmessage = gh.getPRMerge(payload);
-    expect(prmessage).to.equal("branch toto of titi can be archived now !");
+    expect(prmessage).to.deep.equal({ repo: 'titi', branch: 'toto' });
   });
 });

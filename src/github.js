@@ -7,7 +7,7 @@ exports.getPRMerge = function(body) {
       body.action === "closed" &&
       body.pull_request.merged === true
     ) {
-      return `branch ${branch} of ${repo} can be archived now !`;
+      return {repo, branch};
     }
   }
 };
