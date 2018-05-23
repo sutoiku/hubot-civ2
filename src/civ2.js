@@ -142,7 +142,7 @@ module.exports = function(robot) {
 
 function respond(responder, message, target) {
   if (target) {
-    return reponder(target, message);
+    return responder(target, message);
   }
   responder(message);
 }
