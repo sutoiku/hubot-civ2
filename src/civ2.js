@@ -28,110 +28,99 @@ module.exports = function(robot) {
   ];
   for (const target of targets) {
     const re = new RegExp(`deploy to ${target.trigger} ?(\S*)`);
-    robot.hear(re, msg => {
+    robot.hear(re, async msg => {
       const tag = msg.match[1] || "release-candidate";
-      target
-        .method(tag)
-        .then(response => {
-          const tagTxt = tag ? `tag ${tag}` : "default tag";
-          msg.reply(
-            `The deployment of ${tagTxt} to ${target.trigger} is scheduled.`
-          );
-        })
-        .catch(err => {
-          msg.reply(`Sorry, something went wrong: ${err.message}`);
-        });
+      try {
+        const response = await target.method(tag);
+        const tagTxt = tag ? `tag ${tag}` : "default tag";
+        msg.reply(
+          `The deployment of ${tagTxt} to ${target.trigger} is scheduled.`
+        );
+      } catch (ex) {
+        msg.reply(`Sorry, something went wrong: ${ex.message}`);
+      }
     });
   }
-  robot.hear(/release stoic (\S*)/, msg => {
+  robot.hear(/release stoic (\S*)/, async msg => {
     const tag = msg.match[1];
-    civ2
-      .release(tag, true)
-      .then(() => {
-        msg.reply("Release in progress.");
-      })
-      .catch(err => {
-        msg.reply(`Sorry, something went wrong: ${err.message}`);
-      });
+    try {
+      await civ2.release(tag, true);
+      msg.reply("Release in progress.");
+    } catch (ex) {
+      msg.reply(`Sorry, something went wrong: ${err.message}`);
+    }
   });
 
-  robot.hear(/rollback stoic (\S*)/, msg => {
+  robot.hear(/rollback stoic (\S*)/, async msg => {
     const tag = msg.match[1];
-    civ2
-      .release(tag, false)
-      .then(() => {
-        msg.reply("Rollback in progress.");
-      })
-      .catch(err => {
-        msg.reply(`Sorry, something went wrong: ${err.message}`);
-      });
+    try {
+      await civ2.release(tag, false);
+      msg.reply("Rollback in progress.");
+    } catch (ex) {
+      msg.reply(`Sorry, something went wrong: ${err.message}`);
+    }
   });
 
-  robot.hear(/update yourself please/, msg => {
-    civ2
-      .updateBot()
-      .then(() => {
-        msg.reply("I'm now refreshing myself, master.");
-      })
-      .catch(err => {
-        msg.reply(`Sorry, something went wrong: ${err.message}`);
-      });
+  robot.hear(/update yourself please/, async msg => {
+    try {
+      await civ2.updateBot();
+      msg.reply("I'm now refreshing myself, master.");
+    } catch (ex) {
+      msg.reply(`Sorry, something went wrong: ${err.message}`);
+    }
   });
 
-  robot.respond(/archive (\S*) (\S*)/, msg => {
+  robot.respond(/archive (\S*) (\S*)/, async msg => {
     const repo = msg.match[1],
       branch = msg.match[2];
     console.log(`repo: ${repo}, branch:${branch}`);
-    civ2
-      .archive(repo, branch)
-      .then(body => {
-        const bodyContent = JSON.parse(body);
-        if (bodyContent === "ok") {
-          return msg.send(
-            `<https://github/com/sutoiku/${repo}/branches|Branch> ${branch} is now renamed archive/${branch}.`
-          );
-        }
-        msg.send(
-          `Hum, something unexpected happened. You'd better <https://github.com/sutoiku/${repo}/branches|check on github>.`
-        );
-      })
-      .catch(err => {
-        msg.send(
-          `An error occured while renaming ${branch} to archive/${branch}. ${
-            err.message
-          }`
-        );
-      });
+    try {
+      const body = await civ2.archive(repo, branch);
+      const bodyContent = JSON.parse(body);
+      if (bodyContent === "ok") {
+        const message = `<https://github/com/sutoiku/${repo}/branches|Branch> ${branch} is now renamed archive/${branch}.`;
+        return respond(msg.send, message);
+      }
+      const message = `Hum, something unexpected happened. You'd better <https://github.com/sutoiku/${repo}/branches|check on github>.`;
+      respond(msg.send, message);
+    } catch (ex) {
+      respond(msg.send, `An error occured (${ex.message}).`);
+    }
   });
 
-  robot.router.post("/hubot/civ2/github-webhook", (req, res) => {
+  robot.router.post("/hubot/civ2/github-webhook", async (req, res) => {
     const room = "#testing-ci";
     const data =
       req.body.payload != null ? JSON.parse(req.body.payload) : req.body;
     const prMerge = gh.getPRMerge(data);
-    if (prMerge) {
-      civ2
-        .archive(prMerge.repo, prMerge.branch)
-        .then(body => {
-          const bodyContent = JSON.parse(body);
-          if (bodyContent === "ok") {
-            robot.messageRoom(
-              room,
-              `<https://github/com/sutoiku/${prMerge.repo}/branches|Branch> ${prMerge.branch} is now archived as archive/${prMerge.branch}.`
-            );
-          }
-          robot.messageRoom(
-            room,
-            `Hum, something unexpected happened. You'd better <https://github.com/sutoiku/${prMerge.repo}/branches|check on github>.`
-          );
-        })
-        .catch(err => {
-          msg.send(
-            `An error occured while renaming branch ${prMerge.branch} of ${prMerge.repo} into archive/${prMerge.branch}.
-             ${err.message}`
-          );
-        });
+    if (!prMerge) {
+      return res.send("OK");
     }
-    return res.send("OK");
+    try {
+      const body = await civ2.archive(prMerge.repo, prMerge.branch);
+      const bodyContent = JSON.parse(body);
+      if (bodyContent === "ok") {
+        const message = `<https://github/com/sutoiku/${
+          prMerge.repo
+        }/branches|Branch> ${prMerge.branch} of ${
+          prMerge.repo
+        } is now archived as archive/${prMerge.branch}.`;
+        return respond(robot.messageRoom, message, room);
+      }
+      const message = `Hum, something unexpected happened. You'd better <https://github.com/sutoiku/${
+        prMerge.repo
+      }/branches|check on github>.`;
+      return respond(robot.messageRoom, message, room);
+    } catch (ex) {
+      respond(robot.messageRoom, `An error occured (${ex.message}).`, room);
+      return res.statusCode(500).send("Error");
+    }
   });
 };
+
+function respond(responder, message, target) {
+  if (target) {
+    return reponder(target, message);
+  }
+  responder(message);
+}
