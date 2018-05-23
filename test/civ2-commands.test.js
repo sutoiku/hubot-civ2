@@ -9,20 +9,8 @@ describe("civ2", function() {
     process.env.HUBOT_JENKINS_AUTH = "bla:toto";
     process.env.HUBOT_JENKINS_URL = "myjenkins.mydomain.tlda";
     civ2 = require("../src/civ2-commands.js");
-    nock(`https://${process.env.HUBOT_JENKINS_URL}`)
-      .get("/crumbIssuer/api/json")
-      .reply(200, {
-        crumb: "fb171d526b9cc9e25afe80b356e12cb7",
-        crumbRequestField: ".crumb"
-      });
+    createApiHandlers(true, "/job/Deployment/job/ci-v1/build");
 
-    nock(
-      `https://${process.env.HUBOT_JENKINS_AUTH}@${
-        process.env.HUBOT_JENKINS_URL
-      }`
-    )
-      .post("/job/Deployment/job/ci-v1/build")
-      .reply(200, "ok");
     civ2
       .deployV1()
       .then(response => {
@@ -36,15 +24,11 @@ describe("civ2", function() {
     process.env.HUBOT_JENKINS_AUTH = "bla:toto";
     process.env.HUBOT_JENKINS_URL = "http://myjenkins.mydomain.tldx";
     civ2 = require("../src/civ2-commands.js");
-    nock(process.env.HUBOT_JENKINS_URL)
-      .get("/crumbIssuer/api/json")
-      .reply(200, {
-        crumb: "fb171d526b9cc9e25afe80b356e12cb7",
-        crumbRequestField: ".crumb"
-      });
-
-    nock(`http://${process.env.HUBOT_JENKINS_AUTH}@myjenkins.mydomain.tldx`)
-      .post("/job/Deployment/job/ci-v1/build")
+    createApiHandlers(false);
+    nock(
+      `http://${process.env.HUBOT_JENKINS_AUTH}@myjenkins.mydomain.tldx`
+    )
+      .post('/job/Deployment/job/ci-v1/build')
       .reply(200, "ok");
     civ2
       .deployV1()
@@ -60,20 +44,8 @@ describe("civ2", function() {
       process.env.HUBOT_JENKINS_AUTH = "bla:toto";
       process.env.HUBOT_JENKINS_URL = "myjenkins.mydomain.tld";
       civ2 = require("../src/civ2-commands.js");
-      nock(`https://${process.env.HUBOT_JENKINS_URL}`)
-        .get("/crumbIssuer/api/json")
-        .reply(200, {
-          crumb: "fb171d526b9cc9e25afe80b356e12cb7",
-          crumbRequestField: ".crumb"
-        });
+      createApiHandlers(true, "/job/Deployment/job/ci-v1/build");
 
-      nock(
-        `https://${process.env.HUBOT_JENKINS_AUTH}@${
-          process.env.HUBOT_JENKINS_URL
-        }`
-      )
-        .post("/job/Deployment/job/ci-v1/build")
-        .reply(200, "ok");
       civ2
         .deployV1()
         .then(response => {
@@ -87,20 +59,11 @@ describe("civ2", function() {
       process.env.HUBOT_JENKINS_AUTH = "bla:toto";
       process.env.HUBOT_JENKINS_URL = "myjenkins.mydomain.tld";
       civ2 = require("../src/civ2-commands.js");
-      nock(`https://${process.env.HUBOT_JENKINS_URL}`)
-        .get("/crumbIssuer/api/json")
-        .reply(200, {
-          crumb: "fb171d526b9cc9e25afe80b356e12cb7",
-          crumbRequestField: ".crumb"
-        });
+      createApiHandlers(
+        true,
+        "/job/Deployment/job/ci-v1/buildWithParameters?tag=pouet"
+      );
 
-      nock(
-        `https://${process.env.HUBOT_JENKINS_AUTH}@${
-          process.env.HUBOT_JENKINS_URL
-        }`
-      )
-        .post("/job/Deployment/job/ci-v1/buildWithParameters?tag=pouet")
-        .reply(200, "ok");
       civ2
         .deployV1("pouet")
         .then(response => {
@@ -116,20 +79,8 @@ describe("civ2", function() {
       process.env.HUBOT_JENKINS_AUTH = "bla:toto";
       process.env.HUBOT_JENKINS_URL = "myjenkins.mydomain.tld";
       civ2 = require("../src/civ2-commands.js");
-      nock(`https://${process.env.HUBOT_JENKINS_URL}`)
-        .get("/crumbIssuer/api/json")
-        .reply(200, {
-          crumb: "fb171d526b9cc9e25afe80b356e12cb7",
-          crumbRequestField: ".crumb"
-        });
+      createApiHandlers(true, "/job/Release/job/marcus-to-docker-cloud/build");
 
-      nock(
-        `https://${process.env.HUBOT_JENKINS_AUTH}@${
-          process.env.HUBOT_JENKINS_URL
-        }`
-      )
-        .post("/job/Release/job/marcus-to-docker-cloud/build")
-        .reply(200, "ok");
       civ2
         .deployDocker()
         .then(response => {
@@ -143,22 +94,11 @@ describe("civ2", function() {
       process.env.HUBOT_JENKINS_AUTH = "bla:toto";
       process.env.HUBOT_JENKINS_URL = "myjenkins.mydomain.tld";
       civ2 = require("../src/civ2-commands.js");
-      nock(`https://${process.env.HUBOT_JENKINS_URL}`)
-        .get("/crumbIssuer/api/json")
-        .reply(200, {
-          crumb: "fb171d526b9cc9e25afe80b356e12cb7",
-          crumbRequestField: ".crumb"
-        });
+      createApiHandlers(
+        true,
+        "/job/Release/job/marcus-to-docker-cloud/buildWithParameters?tag=pouet"
+      );
 
-      nock(
-        `https://${process.env.HUBOT_JENKINS_AUTH}@${
-          process.env.HUBOT_JENKINS_URL
-        }`
-      )
-        .post(
-          "/job/Release/job/marcus-to-docker-cloud/buildWithParameters?tag=pouet"
-        )
-        .reply(200, "ok");
       civ2
         .deployDocker("pouet")
         .then(response => {
@@ -174,20 +114,8 @@ describe("civ2", function() {
       process.env.HUBOT_JENKINS_AUTH = "bla:toto";
       process.env.HUBOT_JENKINS_URL = "myjenkins.mydomain.tld";
       civ2 = require("../src/civ2-commands.js");
-      nock(`https://${process.env.HUBOT_JENKINS_URL}`)
-        .get("/crumbIssuer/api/json")
-        .reply(200, {
-          crumb: "fb171d526b9cc9e25afe80b356e12cb7",
-          crumbRequestField: ".crumb"
-        });
+      createApiHandlers(true, "/job/Release/job/marcus-to-kubernetes/build");
 
-      nock(
-        `https://${process.env.HUBOT_JENKINS_AUTH}@${
-          process.env.HUBOT_JENKINS_URL
-        }`
-      )
-        .post("/job/Release/job/marcus-to-kubernetes/build")
-        .reply(200, "ok");
       civ2
         .deployK8s()
         .then(response => {
@@ -201,22 +129,11 @@ describe("civ2", function() {
       process.env.HUBOT_JENKINS_AUTH = "bla:toto";
       process.env.HUBOT_JENKINS_URL = "myjenkins.mydomain.tld";
       civ2 = require("../src/civ2-commands.js");
-      nock(`https://${process.env.HUBOT_JENKINS_URL}`)
-        .get("/crumbIssuer/api/json")
-        .reply(200, {
-          crumb: "fb171d526b9cc9e25afe80b356e12cb7",
-          crumbRequestField: ".crumb"
-        });
+      createApiHandlers(
+        true,
+        "/job/Release/job/marcus-to-kubernetes/buildWithParameters?tag=pouet"
+      );
 
-      nock(
-        `https://${process.env.HUBOT_JENKINS_AUTH}@${
-          process.env.HUBOT_JENKINS_URL
-        }`
-      )
-        .post(
-          "/job/Release/job/marcus-to-kubernetes/buildWithParameters?tag=pouet"
-        )
-        .reply(200, "ok");
       civ2
         .deployK8s("pouet")
         .then(response => {
@@ -231,20 +148,8 @@ describe("civ2", function() {
       process.env.HUBOT_JENKINS_AUTH = "bla:toto";
       process.env.HUBOT_JENKINS_URL = "myjenkins.mydomain.tld";
       civ2 = require("../src/civ2-commands.js");
-      nock(`https://${process.env.HUBOT_JENKINS_URL}`)
-        .get("/crumbIssuer/api/json")
-        .reply(200, {
-          crumb: "fb171d526b9cc9e25afe80b356e12cb7",
-          crumbRequestField: ".crumb"
-        });
+      createApiHandlers(true, "/job/Release/job/global-release/build");
 
-      nock(
-        `https://${process.env.HUBOT_JENKINS_AUTH}@${
-          process.env.HUBOT_JENKINS_URL
-        }`
-      )
-        .post("/job/Release/job/global-release/build")
-        .reply(200, "ok");
       civ2
         .release()
         .then(response => {
@@ -257,20 +162,11 @@ describe("civ2", function() {
       process.env.HUBOT_JENKINS_AUTH = "bla:toto";
       process.env.HUBOT_JENKINS_URL = "myjenkins.mydomain.tld";
       civ2 = require("../src/civ2-commands.js");
-      nock(`https://${process.env.HUBOT_JENKINS_URL}`)
-        .get("/crumbIssuer/api/json")
-        .reply(200, {
-          crumb: "fb171d526b9cc9e25afe80b356e12cb7",
-          crumbRequestField: ".crumb"
-        });
+      createApiHandlers(
+        true,
+        "/job/Release/job/global-release/buildWithParameters?tag=pouet"
+      );
 
-      nock(
-        `https://${process.env.HUBOT_JENKINS_AUTH}@${
-          process.env.HUBOT_JENKINS_URL
-        }`
-      )
-        .post("/job/Release/job/global-release/buildWithParameters?tag=pouet")
-        .reply(200, "ok");
       civ2
         .release("pouet")
         .then(response => {
@@ -286,3 +182,22 @@ describe("civ2", function() {
     delete process.env.HUBOT_JENKINS_URL;
   });
 });
+
+function createApiHandlers(https, route) {
+  const prefix = https ? "https://" : "";
+  nock(`${prefix}${process.env.HUBOT_JENKINS_URL}`)
+    .get("/crumbIssuer/api/json")
+    .reply(200, {
+      crumb: "fb171d526b9cc9e25afe80b356e12cb7",
+      crumbRequestField: ".crumb"
+    });
+  if (route) {
+    nock(
+      `${prefix}${process.env.HUBOT_JENKINS_AUTH}@${
+        process.env.HUBOT_JENKINS_URL
+      }`
+    )
+      .post(route)
+      .reply(200, "ok");
+  }
+}
