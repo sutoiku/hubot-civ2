@@ -176,6 +176,49 @@ describe("civ2", function() {
         .catch(done);
     });
   });
+
+
+  describe("Task create instance cluster", () => {
+    it("passes the right tag", done => {
+      process.env.HUBOT_JENKINS_AUTH = "bla:toto";
+      process.env.HUBOT_JENKINS_URL = "myjenkins.mydomain.tld";
+      civ2 = require("../src/civ2-commands.js");
+      createApiHandlers(
+        true,
+        "/job/Chore/job/feature-clusters/job/create/buildWithParameters?FEATURE=pouet"
+      );
+
+      civ2
+        .createFeatureCluster("pouet")
+        .then(response => {
+          expect(response.body.toString()).to.equal("ok");
+          done();
+        })
+        .catch(done);
+    });
+  });
+
+  describe("Task destroy instance cluster", () => {
+    it("passes the right tag", done => {
+      process.env.HUBOT_JENKINS_AUTH = "bla:toto";
+      process.env.HUBOT_JENKINS_URL = "myjenkins.mydomain.tld";
+      civ2 = require("../src/civ2-commands.js");
+      createApiHandlers(
+        true,
+        "/job/Chore/job/feature-clusters/job/destroy/buildWithParameters?FEATURE=pouet"
+      );
+
+      civ2
+        .destroyFeatureCluster("pouet")
+        .then(response => {
+          expect(response.body.toString()).to.equal("ok");
+          done();
+        })
+        .catch(done);
+    });
+  });
+
+
   afterEach(() => {
     nock.cleanAll();
     delete process.env.HUBOT_JENKINS_AUTH;

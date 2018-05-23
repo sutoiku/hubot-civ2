@@ -1,4 +1,5 @@
-const rp = require('request-promise');
+const debug = require("debug")("hubot:civ2:commands");
+const rp = require("request-promise");
 const CI_API_ROOT = process.env.CI_API_ROOT;
 const token = process.env.CI_API_AUTH;
 const headers = {
@@ -18,7 +19,9 @@ exports.deployK8s = function(tag) {
 
 exports.release = function(tag, UpdatePivotalAndGitHub) {
   const additionalParameters = UpdatePivotalAndGitHub
-    ? { UpdatePivotalAndGitHub }
+    ? {
+        UpdatePivotalAndGitHub
+      }
     : undefined;
   return buildJob("Release/global-release", tag, additionalParameters);
 };
@@ -27,11 +30,26 @@ exports.updateBot = function() {
   return buildJob("Chore/hubot/stoic-hubot/master");
 };
 
-exports.archive = function(repo, branch){
+exports.archive = function(repo, branch) {
   const encodedBranch = encodeURIComponent(branch);
   const url = `${CI_API_ROOT}archive/${repo}/${encodedBranch}`;
-  return rp(url, {headers  });
-}
+  return rp(url, {
+    headers
+  });
+};
+
+exports.createFeatureCluster = FEATURE => {
+  return buildJob("Chore/feature-clusters/create", undefined, {
+    FEATURE
+  });
+};
+
+exports.destroyFeatureCluster = FEATURE => {
+  return buildJob("Chore/feature-clusters/destroy", undefined, {
+    FEATURE
+  });
+};
+
 function buildJob(name, tag, additionalParameters) {
   const baseUrl = getBaseUrl();
   const jenkins = require("jenkins")({
@@ -41,13 +59,20 @@ function buildJob(name, tag, additionalParameters) {
   });
   let options = name;
   if (tag !== undefined) {
-    options = { name: name, parameters: { tag } };
+    options = {
+      name: name,
+      parameters: {
+        tag
+      }
+    };
   }
   if (additionalParameters !== undefined) {
     if (typeof options !== "object") {
-      options = { name: options, parameters: {} };
+      options = {
+        name: options,
+        parameters: {}
+      };
     }
-    console.log(options, additionalParameters);
     Object.assign(options.parameters, additionalParameters);
   }
   return jenkins.job.build(options);

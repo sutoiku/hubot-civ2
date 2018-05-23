@@ -11,6 +11,8 @@
 //   release stoic <version> - releases <version> in the wild.
 //   roolback stoic <version> - rollback to stoic >version>
 //   archive <repository> <branch>
+//   create feature instance <branch> - Creates a cluster on the specified branch
+//   destroy feature instance <branch> - Destroys the cluster of the specified branch
 //
 // Notes:
 //   <optional notes required for the script>
@@ -85,6 +87,26 @@ module.exports = function(robot) {
       respond(msg.send, message);
     } catch (ex) {
       respond(msg.send, `An error occured (${ex.message}).`);
+    }
+  });
+
+  robot.hear(/create feature instance (\S*)/, async msg => {
+    const branch = msg.match[1];
+    try {
+      await civ2.createFeatureCluster(branch);
+      msg.reply("Creation in progress.");
+    } catch (ex) {
+      msg.reply(`Sorry, something went wrong: ${err.message}`);
+    }
+  });
+
+  robot.hear(/destroy feature instance (\S*)/, async msg => {
+    const branch = msg.match[1];
+    try {
+      await civ2.destroyFeatureCluster(branch);
+      msg.reply("Destruction in progress.");
+    } catch (ex) {
+      msg.reply(`Sorry, something went wrong: ${err.message}`);
     }
   });
 
