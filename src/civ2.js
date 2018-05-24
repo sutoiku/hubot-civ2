@@ -81,12 +81,12 @@ module.exports = function(robot) {
       const bodyContent = JSON.parse(body);
       if (bodyContent === "ok") {
         const message = `<https://github/com/sutoiku/${repo}/branches|Branch> ${branch} is now renamed archive/${branch}.`;
-        return respond(msg.send, message);
+        return msg.send(message);
       }
       const message = `Hum, something unexpected happened. You'd better <https://github.com/sutoiku/${repo}/branches|check on github>.`;
-      respond(msg.send, message);
+      return msg.send(message);
     } catch (ex) {
-      respond(msg.send, `An error occured (${ex.message}).`);
+      msg.send(`An error occured (${ex.message}).`);
     }
   });
 
@@ -127,22 +127,15 @@ module.exports = function(robot) {
         }/branches|Branch> ${prMerge.branch} of ${
           prMerge.repo
         } is now archived as archive/${prMerge.branch}.`;
-        return respond(robot.messageRoom, message, room);
+        return robot.messageRoom(room, message);
       }
       const message = `Hum, something unexpected happened. You'd better <https://github.com/sutoiku/${
         prMerge.repo
       }/branches|check on github>.`;
-      return respond(robot.messageRoom, message, room);
+      return robot.messageRoom(room, message);
     } catch (ex) {
-      respond(robot.messageRoom, `An error occured (${ex.message}).`, room);
+      robot.messageRoom(room, `An error occured (${ex.message}).`);
       return res.statusCode(500).send("Error");
     }
   });
 };
-
-function respond(responder, message, target) {
-  if (target) {
-    return responder(target, message);
-  }
-  responder(message);
-}
