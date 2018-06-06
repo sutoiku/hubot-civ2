@@ -115,11 +115,16 @@ module.exports = function(robot) {
     const data =
       req.body.payload != null ? JSON.parse(req.body.payload) : req.body;
     const prMerge = gh.getPRMerge(data);
+    console.log('Got a webhook alert.')
+
     if (!prMerge) {
       return res.send("OK");
     }
+    console.log("It's a PR merge !", prMerge.repo, prMerge.branch);
+
     try {
       const body = await civ2.archive(prMerge.repo, prMerge.branch);
+      console.log('Merge OK');
       const bodyContent = JSON.parse(body);
       if (bodyContent === "ok") {
         const message = `<https://github/com/sutoiku/${
@@ -129,6 +134,7 @@ module.exports = function(robot) {
         } is now archived as archive/${prMerge.branch}.`;
         return robot.messageRoom(room, message);
       }
+      console.log('oops', bodyContent);
       const message = `Hum, something unexpected happened. You'd better <https://github.com/sutoiku/${
         prMerge.repo
       }/branches|check on github>.`;
