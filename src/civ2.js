@@ -120,6 +120,11 @@ module.exports = function(robot) {
     if (!prMerge) {
       return res.send("OK");
     }
+    if (prMerge.base !== 'master') {
+      const msg = `The PR ${prMerge.repo}#${prMerge.id} was not forked from master. Won't archive ${prMerge.branch}.`;
+      robot.messageRoom(room, msg);
+      return console.log(msg);
+    }
     console.log("It's a PR merge !", prMerge.repo, prMerge.branch);
 
     try {
