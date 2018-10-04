@@ -106,7 +106,7 @@ module.exports = function(robot) {
       await civ2.destroyFeatureCluster(branch);
       msg.reply("Destruction in progress.");
     } catch (ex) {
-      msg.reply(`Sorry, something went wrong: ${err.message}`);
+      msg.reply(`Sorry, something went wrong: ${ex.message}`);
     }
   });
 
