@@ -17,7 +17,7 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GitHub = require("github-api");
 const gh = new GitHub({ token: GITHUB_TOKEN });
 
-module.exports = { getAllReposBranchInformation };
+module.exports = { getAllReposBranchInformation, getPTLink };
 
 async function mergePrs(branchName) {
   const branchInformation = await getAllReposBranchInformation(branchName);
@@ -100,11 +100,13 @@ async function getBranchPr(repo, branchName) {
 
 // HELPERS
 function getPrText(branchName, repos) {
-  const ptId = getPtIdFromBranchName(branchName);
-  const ptLink = ptId
-    ? `https://www.pivotaltracker.com/story/show/${ptId}`
-    : "Not found.";
+  const ptLink = getPTLink(branchName) || "No PT";
   return `# PT\n${ptLink}\n\n# REPOS\n${repos.join(",")}`;
+}
+
+function getPTLink(branchName) {
+  const ptId = getPtIdFromBranchName(branchName);
+  return !!ptId && `https://www.pivotaltracker.com/story/show/${ptId}`;
 }
 
 function getPtIdFromBranchName(branchName) {

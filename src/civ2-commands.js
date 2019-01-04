@@ -54,9 +54,7 @@ exports.destroyFeatureCluster = FEATURE => {
 exports.getBranchInformation = async function(branchName) {
   try {
     const status = await ghApi.getAllReposBranchInformation(branchName);
-    const message = formatBranchInformation(branchName, status);
-    console.log(message);
-    return message;
+    return formatBranchInformation(branchName, status);
   } catch (error) {
     console.error(error);
     return `Error: ${error.message}`;
@@ -102,23 +100,29 @@ function getBaseUrl() {
 
 // HELPERS
 function formatBranchInformation(branchName, status) {
-  let result = "";
+  const result = [];
+  const ptLink = ghApi.getPTLink(branchName);
+
+  if (ptLink) {
+    result.push(ptLink);
+  }
+
   if (Object.keys(status).length === 0) {
-    return "Branch was not found on the product repositories";
+    return `Branch "${branchName}" was not found on the product repositories`;
   }
 
   for (const [repo, data] of Object.entries(status)) {
-    result += getRepoReport(repo, branchName, data);
+    result.push(getRepoReport(repo, branchName, data));
   }
 
-  return result;
+  return result.join("\n");
 }
 
 function getRepoReport(repoName, branchName, data) {
   const prStatus = getPRStatus(data);
   const repoUrl = `https://github.com/sutoiku/${repoName}/tree/${branchName}`;
   const statusReport = getStatusReport(data);
-  return `* <${repoUrl}|${repoName}> : ${prStatus} - ${statusReport}\n`;
+  return ` * <${repoUrl}|${repoName}> : ${prStatus} - ${statusReport}`;
 }
 
 function getStatusReport({ status }) {

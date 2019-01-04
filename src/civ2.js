@@ -13,6 +13,7 @@
 //   archive <repository> <branch>
 //   create feature instance <branch> - Creates a cluster on the specified branch
 //   destroy feature instance <branch> - Destroys the cluster of the specified branch
+//   branch status <branch name> - Displays information on branche and PRs
 //
 // Notes:
 //   <optional notes required for the script>
