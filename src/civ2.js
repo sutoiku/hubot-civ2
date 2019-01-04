@@ -112,7 +112,8 @@ module.exports = function(robot) {
 
   robot.hear(/branch status (\S*)/, async msg => {
     const branchName = msg.match[1];
-    const message = civ2.getBranchInformation(branchName);
+    msg.reply(`Checking branch ${branchName}...`);
+    const message = await civ2.getBranchInformation(branchName);
     msg.reply(message);
   });
 
