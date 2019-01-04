@@ -20,6 +20,7 @@
   "dependencies": {
     "coffee-script": "~1.12",
     "debug": "^3.1.0",
+    "github-api": "^3.0.0",
     "jenkins": "^0.20.1",
     "request": "^2.87.0",
     "request-promise": "^4.2.2"

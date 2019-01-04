@@ -33,7 +33,7 @@ module.exports = function(robot) {
     robot.hear(re, async msg => {
       const tag = msg.match[1] || "release-candidate";
       try {
-        const response = await target.method(tag);
+        await target.method(tag);
         const tagTxt = tag ? `tag ${tag}` : "default tag";
         msg.reply(
           `The deployment of ${tagTxt} to ${target.trigger} is scheduled.`
@@ -110,18 +110,26 @@ module.exports = function(robot) {
     }
   });
 
+  robot.hear(/branch status (\S*)/, async msg => {
+    const branchName = msg.match[1];
+    const message = civ2.getBranchInformation(branchName);
+    msg.reply(message);
+  });
+
   robot.router.post("/hubot/civ2/github-webhook", async (req, res) => {
     const room = "#testing-ci";
     const data =
       req.body.payload != null ? JSON.parse(req.body.payload) : req.body;
     const prMerge = gh.getPRMerge(data);
-    console.log('Got a webhook alert.')
+    console.log("Got a webhook alert.");
 
     if (!prMerge) {
       return res.send("OK");
     }
-    if (prMerge.base !== 'master') {
-      const msg = `The PR ${prMerge.repo}#${prMerge.id} was not forked from master. Won't archive ${prMerge.branch}.`;
+    if (prMerge.base !== "master") {
+      const msg = `The PR ${prMerge.repo}#${
+        prMerge.id
+      } was not forked from master. Won't archive ${prMerge.branch}.`;
       robot.messageRoom(room, msg);
       return console.log(msg);
     }
@@ -129,7 +137,7 @@ module.exports = function(robot) {
 
     try {
       const body = await civ2.archive(prMerge.repo, prMerge.branch);
-      console.log('Merge OK');
+      console.log("Merge OK");
       const bodyContent = JSON.parse(body);
       if (bodyContent === "ok") {
         const message = `<https://github/com/sutoiku/${
@@ -139,7 +147,7 @@ module.exports = function(robot) {
         } is now archived as archive/${prMerge.branch}.`;
         return robot.messageRoom(room, message);
       }
-      console.log('oops', bodyContent);
+      console.log("oops", bodyContent);
       const message = `Hum, something unexpected happened. You'd better <https://github.com/sutoiku/${
         prMerge.repo
       }/branches|check on github>.`;
