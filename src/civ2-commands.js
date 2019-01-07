@@ -61,6 +61,21 @@ exports.getBranchInformation = async function(branchName) {
   }
 };
 
+exports.createPRs = async function(branchName) {
+  await ghApi.createMissingPrs(branchName);
+
+  try {
+    const created = await ghApi.createMissingPrs(branchName);
+    const strCreated = Object.keys(created)
+      .map(it => "`" + it + "`")
+      .join(",");
+    return `Pull Request created on ${strCreated}`;
+  } catch (error) {
+    console.error(error);
+    return `Error: ${error.message}`;
+  }
+};
+
 function buildJob(name, tag, additionalParameters) {
   const baseUrl = getBaseUrl();
   const jenkins = require("jenkins")({

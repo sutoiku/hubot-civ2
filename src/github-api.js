@@ -17,7 +17,7 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GitHub = require("github-api");
 const gh = new GitHub({ token: GITHUB_TOKEN });
 
-module.exports = { getAllReposBranchInformation, getPTLink };
+module.exports = { getAllReposBranchInformation, getPTLink, createMissingPrs };
 
 async function mergePrs(branchName) {
   const branchInformation = await getAllReposBranchInformation(branchName);
@@ -47,7 +47,7 @@ async function createMissingPrs(branchName) {
 
   const prText = getPrText(branchName, Object.keys(branchInformation));
   const created = {};
-  for (const repo of prsToCreate) {
+  for (const repoName of prsToCreate) {
     const prSpec = {
       title: branchName,
       head: branchName,
@@ -55,9 +55,8 @@ async function createMissingPrs(branchName) {
       body: prText
     };
 
-    /*created[repo] = await branchInformation[repo].repo.createPullRequest(
-      prSpec
-    );*/
+    const { repo } = branchInformation[repoName];
+    created[repoName] = await repo.createPullRequest(prSpec);
   }
   return created;
 }

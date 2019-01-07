@@ -7,13 +7,14 @@
 // Commands:
 //   deploy to civ1 <optional tag> - deploys the specified image:tag to civ1. (default tag : release-candidate)
 //   deploy to dockercloud <optional tag> - deploys the specified image:tag to docker. (default tag : release-candidate)
-//   deploy to kubernetes <optional tag> - deploys the specified image:tag to kuberentes dev cluster. (default tag : release-candidate)
+//   deploy to kubernetes <optional tag> - deploys the specified image:tag to kubernetes dev cluster. (default tag : release-candidate)
 //   release stoic <version> - releases <version> in the wild.
 //   roolback stoic <version> - rollback to stoic >version>
 //   archive <repository> <branch>
 //   create feature instance <branch> - Creates a cluster on the specified branch
 //   destroy feature instance <branch> - Destroys the cluster of the specified branch
-//   branch status <branch name> - Displays information on branche and PRs
+//   branch status <branch name> - Displays information on branch and PRs
+//   create pull requests <branch name> - Create PRs on repos with the specified branch
 //
 // Notes:
 //   <optional notes required for the script>
@@ -117,6 +118,15 @@ module.exports = function(robot) {
     const message = await civ2.getBranchInformation(branchName);
     msg.reply(message);
   });
+
+  robot.hear(/create pull requests (\S*)/, async msg => {
+    const branchName = msg.match[1];
+    msg.reply(`Creating PRs for branch ${branchName}...`);
+    const message = await civ2.createPRs(branchName);
+    msg.reply(message);
+  });
+
+
 
   robot.router.post("/hubot/civ2/github-webhook", async (req, res) => {
     const room = "#testing-ci";
