@@ -37,7 +37,7 @@ function findMissingPrs(branchInformation) {
   return prsToCreate;
 }
 
-async function createMissingPrs(branchName) {
+async function createMissingPrs(branchName, userName) {
   const branchInformation = await getAllReposBranchInformation(branchName);
   const prsToCreate = findMissingPrs(branchInformation);
 
@@ -45,7 +45,11 @@ async function createMissingPrs(branchName) {
     return null;
   }
 
-  const prText = getPrText(branchName, Object.keys(branchInformation));
+  const prText = getPrText(
+    branchName,
+    userName,
+    Object.keys(branchInformation)
+  );
   const created = {};
   for (const repoName of prsToCreate) {
     const prSpec = {
@@ -98,9 +102,10 @@ async function getBranchPr(repo, branchName) {
 }
 
 // HELPERS
-function getPrText(branchName, repos) {
+function getPrText(branchName, userName, repos) {
   const ptLink = getPTLink(branchName) || "No PT";
-  return `# PT\n${ptLink}\n\n# REPOS\n${repos.join(",")}`;
+  const strRepos = repos.map(it => "`" + it + "`").join(",");
+  return `This issue has been created by ${userName} via the bot.\~~n# PT\n${ptLink}\n\n# REPOS\n${strRepos}`;
 }
 
 function getPTLink(branchName) {

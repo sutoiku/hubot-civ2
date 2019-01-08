@@ -61,11 +61,13 @@ exports.getBranchInformation = async function(branchName) {
   }
 };
 
-exports.createPRs = async function(branchName) {
+exports.createPRs = async function(branchName, userName) {
   await ghApi.createMissingPrs(branchName);
 
   try {
-    const created = await ghApi.createMissingPrs(branchName);
+    const created = await ghApi.createMissingPrs(branchName, userName);
+    console.log(created);
+
     const strCreated = Object.keys(created)
       .map(it => "`" + it + "`")
       .join(",");

@@ -122,7 +122,7 @@ module.exports = function(robot) {
   robot.hear(/create pull requests (\S*)/, async msg => {
     const branchName = msg.match[1];
     msg.reply(`Creating PRs for branch ${branchName}...`);
-    const message = await civ2.createPRs(branchName);
+    const message = await civ2.createPRs(branchName, msg.message.user.name);
     msg.reply(message);
   });
 
