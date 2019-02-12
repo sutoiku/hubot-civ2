@@ -159,6 +159,8 @@ function keepLatestStatus(statuses) {
   const result = {};
   for (const stat of statuses) {
     const { context, updated_at } = stat;
+    if(context === 'continuous-integration/jenkins/branch') { continue; }
+    
     if (
       !result[context] ||
       new Date(updated_at) < new Date(result[context].updated_at)
