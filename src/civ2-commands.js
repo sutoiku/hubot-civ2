@@ -141,7 +141,9 @@ function getRepoReport(repoName, branchName, data) {
 }
 
 function getStatusReport({ status }) {
-  const statuses = keepLatestStatus(status);
+  const statuses = keepLatestStatus(statuses);
+  console.log(`status : ${JSON.stringify(stat)}`)
+
   let okStatus = 0;
   for (const stat of Object.values(statuses)) {
     const { state } = stat;
