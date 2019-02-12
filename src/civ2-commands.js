@@ -142,25 +142,32 @@ function getRepoReport(repoName, branchName, data) {
 
 function getStatusReport({ status }) {
   const statuses = keepLatestStatus(status);
-  console.log(`status : ${JSON.stringify(statuses)}`)
-
-  let okStatus = 0;
+  let okStatus = 0,
+    notOk = [];
   for (const stat of Object.values(statuses)) {
     const { state } = stat;
 
     if (state === "success") {
       okStatus++;
+    } else {
+      notOk.push(`${context} : ${state}`);
     }
   }
-  return `${okStatus}/${Object.keys(statuses).length} checks ok`;
+  const totalStatus = Object.keys(statuses).length;
+  if (okStatus === totalStatus) {
+    return "All OK";
+  }
+  return `${okStatus}/${totalStatus} OK (${notOk.join(",")})`;
 }
 
 function keepLatestStatus(statuses) {
   const result = {};
   for (const stat of statuses) {
     const { context, updated_at } = stat;
-    if(context === 'continuous-integration/jenkins/branch') { continue; }
-    
+    if (context === "continuous-integration/jenkins/branch") {
+      continue;
+    }
+
     if (
       !result[context] ||
       new Date(updated_at) < new Date(result[context].updated_at)
