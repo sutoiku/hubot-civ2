@@ -145,7 +145,7 @@ function getStatusReport({ status }) {
   let okStatus = 0,
     notOk = [];
   for (const stat of Object.values(statuses)) {
-    const { state } = stat;
+    const { state, context } = stat;
 
     if (state === "success") {
       okStatus++;
