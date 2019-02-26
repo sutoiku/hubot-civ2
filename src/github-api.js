@@ -105,7 +105,7 @@ async function getBranchPr(repo, branchName) {
 function getPrText(branchName, userName, repos) {
   const ptLink = getPTLink(branchName) || "No PT";
   const strRepos = repos.map(it => "`" + it + "`").join(",");
-  return `This issue has been created by ${userName} via the bot.\n\n# PT\n${ptLink}\n\n# REPOS\n${strRepos}`;
+  return `This pull request has been created by ${userName} via the bot.\n\n# PT\n${ptLink}\n\n# REPOS\n${strRepos}`;
 }
 
 function getPTLink(branchName) {
