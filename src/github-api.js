@@ -15,9 +15,16 @@ const REPOS = [
 ];
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GitHub = require("github-api");
-const gh = new GitHub({ token: GITHUB_TOKEN });
+const gh = new GitHub({
+  token: GITHUB_TOKEN
+});
+const helpers = require('./helpers');
 
-module.exports = { getAllReposBranchInformation, getPTLink, createMissingPrs };
+module.exports = {
+  getAllReposBranchInformation,
+  getPTLink,
+  createMissingPrs
+};
 
 async function mergePrs(branchName) {
   const branchInformation = await getAllReposBranchInformation(branchName);
@@ -50,16 +57,23 @@ async function createMissingPrs(branchName, userName) {
     userName,
     Object.keys(branchInformation)
   );
+
+  const user = helpers.getUserFromSlackLogin(userName);
+  const assignees = user && [user.githubLogin];
+
   const created = {};
   for (const repoName of prsToCreate) {
     const prSpec = {
       title: branchName,
       head: branchName,
       base: "master",
-      body: prText
+      body: prText,
+      assignees
     };
 
-    const { repo } = branchInformation[repoName];
+    const {
+      repo
+    } = branchInformation[repoName];
     created[repoName] = await repo.createPullRequest(prSpec);
   }
   return created;
@@ -71,7 +85,9 @@ async function getAllReposBranchInformation(branchName) {
     const repo = gh.getRepo("sutoiku", repoName);
     const repoData = await repoHasBranch(repo, branchName);
     if (repoData !== null) {
-      allBranches[repoName] = Object.assign({ repo }, repoData);
+      allBranches[repoName] = Object.assign({
+        repo
+      }, repoData);
     }
   }
   return allBranches;
@@ -79,10 +95,18 @@ async function getAllReposBranchInformation(branchName) {
 
 async function repoHasBranch(repo, branchName) {
   try {
-    const { data: branch } = await repo.getBranch(branchName);
-    const { data: status } = await repo.listStatuses(branchName);
+    const {
+      data: branch
+    } = await repo.getBranch(branchName);
+    const {
+      data: status
+    } = await repo.listStatuses(branchName);
     const pr = await getBranchPr(repo, branchName);
-    return { branch, status, pr };
+    return {
+      branch,
+      status,
+      pr
+    };
   } catch (error) {
     if (error.message.startsWith("404")) {
       return null;
@@ -105,7 +129,9 @@ async function getBranchPr(repo, branchName) {
 function getPrText(branchName, userName, repos) {
   const ptLink = getPTLink(branchName) || "No PT";
   const strRepos = repos.map(it => "`" + it + "`").join(",");
-  return `This pull request has been created by ${userName} via the bot.\n\n# PT\n${ptLink}\n\n# REPOS\n${strRepos}`;
+  const user = helpers.getUserFromSlackLogin(userName);
+  const displayName = user ? user.firstName : userName;
+  return `This pull request has been created by ${displayName} via the bot.\n\n# PT\n${ptLink}\n\n# REPOS\n${strRepos}`;
 }
 
 function getPTLink(branchName) {
