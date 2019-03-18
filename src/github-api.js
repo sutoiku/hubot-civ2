@@ -102,10 +102,13 @@ async function repoHasBranch(repo, branchName) {
       data: status
     } = await repo.listStatuses(branchName);
     const pr = await getBranchPr(repo, branchName);
+    const reviews = await getReviews(repo, pr);
+
     return {
       branch,
       status,
-      pr
+      pr,
+      reviews
     };
   } catch (error) {
     if (error.message.startsWith("404")) {
@@ -142,4 +145,14 @@ function getPTLink(branchName) {
 function getPtIdFromBranchName(branchName) {
   const match = branchName.match(/\d+$/);
   return match && match[0];
+}
+
+async function getReviews(repo, pr){
+  if(!pr){return}
+  return new  Promise(function(resolve, reject) {
+    repo._request('GET', `/repos/${repo.__fullname}/pulls/${pr.number}/reviews`, null, (err, body)=>{
+      resolve(body)
+    });
+
+  });
 }

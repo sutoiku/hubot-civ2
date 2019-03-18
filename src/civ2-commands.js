@@ -64,7 +64,7 @@ exports.getBranchInformation = async function(branchName) {
 exports.createPRs = async function(branchName, userName) {
   try {
     const created = await ghApi.createMissingPrs(branchName, userName);
-    console.log(created);
+    //console.log(created);
 
     const strCreated = Object.keys(created)
       .map(it => "`" + it + "`")
@@ -135,42 +135,42 @@ function formatBranchInformation(branchName, status) {
 
 function getRepoReport(repoName, branchName, data) {
   const prStatus = getPRStatus(data);
+  //const reviewsStatus = getReviewsStatus(data);
   const repoUrl = `https://github.com/sutoiku/${repoName}/tree/${branchName}`;
+
   const statusReport = getStatusReport(data);
-  return ` * <${repoUrl}|${repoName}> : ${prStatus} - ${statusReport}`;
+  const statusMessage = "Statuses: " + statusReport.message;
+
+  return ` * <${repoUrl}|${repoName}> : ${prStatus} - ${statusMessage}`;
 }
 
 function getStatusReport({ status }) {
   const statuses = keepLatestStatus(status);
-  let okStatus = 0,
-    notOk = [];
+  let okStatus = 0;
   for (const stat of Object.values(statuses)) {
     const { state, context } = stat;
 
     if (state === "success") {
       okStatus++;
-    } else {
-      notOk.push(`${context} : ${state}`);
     }
   }
   const totalStatus = Object.keys(statuses).length;
   if (okStatus === totalStatus) {
     return "All OK";
   }
-  return `${okStatus}/${totalStatus} OK (${notOk.join(",")})`;
+  return {
+    message: `${okStatus}/${totalStatus} OK`,
+    mergeable: okStatus === totalStatus
+  };
 }
 
 function keepLatestStatus(statuses) {
   const result = {};
   for (const stat of statuses) {
-    const { context, updated_at } = stat;
-    if (context === "continuous-integration/jenkins/branch") {
-      continue;
-    }
-
+    const { context, updated_at, state } = stat;
     if (
       !result[context] ||
-      new Date(updated_at) < new Date(result[context].updated_at)
+      new Date(updated_at) > new Date(result[context].updated_at)
     ) {
       result[context] = stat;
     }
@@ -185,3 +185,31 @@ function getPRStatus({ pr }) {
   }
   return "no PR";
 }
+
+function getReviewsStatus({ reviews }) {
+  const statuses = reviews.map(it => it.state).reduce((acc, it) => {
+    if (!acc[it]) {
+      acc[it] = 0;
+    }
+    acc[it]++;
+    return acc;
+  }, {});
+
+  const report = [];
+  for (const [stat, count] of Object.entries(statuses)) {
+    report.push(`${count}/${reviews.length} ${stat}`);
+  }
+
+  const mergeable = !!statuses.APPROVED && Object.keys(statuses).length == 1;
+  const message = report.join(",");
+  return { message, mergeable };
+}
+/*
+async function test() {
+  const branch = "chore/freeze-requires-163656563";
+  const result = await exports.getBranchInformation(branch);
+  console.log(result);
+}
+
+test();
+*/
