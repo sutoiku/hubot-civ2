@@ -155,11 +155,10 @@ function getStatusReport({ status }) {
     }
   }
   const totalStatus = Object.keys(statuses).length;
-  if (okStatus === totalStatus) {
-    return "All OK";
-  }
+
   return {
-    message: `${okStatus}/${totalStatus} OK`,
+    message:
+      okStatus === totalStatus ? "All OK" : `${okStatus}/${totalStatus} OK`,
     mergeable: okStatus === totalStatus
   };
 }
