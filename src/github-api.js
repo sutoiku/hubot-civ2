@@ -59,8 +59,10 @@ async function createMissingPrs(branchName, userName) {
   );
 
   const user = helpers.getUserFromSlackLogin(userName);
+  console.log('USER', userName, user);
   const assignees = user && [user.githubLogin];
-
+  console.log('ASSIGNEES', assignees);
+  
   const created = {};
   for (const repoName of prsToCreate) {
     const prSpec = {
