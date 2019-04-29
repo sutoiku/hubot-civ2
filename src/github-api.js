@@ -25,7 +25,8 @@ const helpers = require("./helpers");
 module.exports = {
   getAllReposBranchInformation,
   getPTLink,
-  createMissingPrs
+  createMissingPrs,
+  deleteBranch
 };
 
 async function mergePrs(branchName) {
@@ -130,6 +131,7 @@ async function getBranchPr(repo, branchName) {
 }
 
 async function deleteBranch(repoName, branchName) {
+  const repo = gh.getRepo(GITHUB_ORG_NAME, repoName);
   return requestOnRepo(
     repo,
     "DELETE",

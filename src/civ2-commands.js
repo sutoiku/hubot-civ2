@@ -39,6 +39,10 @@ exports.archive = function(repo, branch) {
   });
 };
 
+exports.deleteBranch = function(repo, branch) {
+  return ghApi.deleteBranch(repo, branch);
+};
+
 exports.createFeatureCluster = FEATURE => {
   return buildJob("Chore/feature-clusters/create", undefined, {
     FEATURE

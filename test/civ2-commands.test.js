@@ -143,6 +143,7 @@ describe("civ2", function() {
         .catch(done);
     });
   });
+
   describe("Task release", () => {
     it("calls the right Jenkins job", done => {
       process.env.HUBOT_JENKINS_AUTH = "bla:toto";
@@ -176,7 +177,6 @@ describe("civ2", function() {
         .catch(done);
     });
   });
-
 
   describe("Task create instance cluster", () => {
     it("passes the right tag", done => {
@@ -218,6 +218,23 @@ describe("civ2", function() {
     });
   });
 
+  describe("Github operations", () => {
+    let civ2;
+
+    beforeEach(() => {
+      civ2 = require("../src/civ2-commands.js");
+    });
+
+    describe("deleteBranch", () => {
+      it("should call github API", async () => {
+        nock("https://api.github.com")
+          .delete("/repos/sutoiku/pipoRepo/git/refs/heads/branchToDelete")
+          .reply(204);
+
+        await civ2.deleteBranch("pipoRepo", "branchToDelete");
+      });
+    });
+  });
 
   afterEach(() => {
     nock.cleanAll();
