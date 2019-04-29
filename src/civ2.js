@@ -9,7 +9,7 @@
 //   deploy to dockercloud <optional tag> - deploys the specified image:tag to docker. (default tag : release-candidate)
 //   deploy to kubernetes <optional tag> - deploys the specified image:tag to kubernetes dev cluster. (default tag : release-candidate)
 //   release stoic <version> - releases <version> in the wild.
-//   roolback stoic <version> - rollback to stoic >version>
+//   rollback stoic <version> - rollback to stoic <version>
 //   archive <repository> <branch>
 //   create feature instance <branch> - Creates a cluster on the specified branch
 //   destroy feature instance <branch> - Destroys the cluster of the specified branch
@@ -138,31 +138,20 @@ module.exports = function(robot) {
     if (!prMerge) {
       return res.send("OK");
     }
-    if (prMerge.base !== "master") {
-      const msg = `The PR ${prMerge.repo}#${
-        prMerge.id
-      } was not forked from master. Won't archive ${prMerge.branch}.`;
+
+    const { repo, branch, id, base } = prMerge;
+
+    if (base !== "master") {
+      const msg = `The PR ${repo}#${id} was not forked from master. Won't delete ${branch}.`;
       robot.messageRoom(room, msg);
       return console.log(msg);
     }
-    console.log("It's a PR merge !", prMerge.repo, prMerge.branch);
+
+    console.log("It's a PR merge !", repo, branch);
 
     try {
-      const body = await civ2.archive(prMerge.repo, prMerge.branch);
-      console.log("Merge OK");
-      const bodyContent = JSON.parse(body);
-      if (bodyContent === "ok") {
-        const message = `<https://github/com/sutoiku/${
-          prMerge.repo
-        }/branches|Branch> ${prMerge.branch} of ${
-          prMerge.repo
-        } is now archived as archive/${prMerge.branch}.`;
-        return robot.messageRoom(room, message);
-      }
-      console.log("oops", bodyContent);
-      const message = `Hum, something unexpected happened. You'd better <https://github.com/sutoiku/${
-        prMerge.repo
-      }/branches|check on github>.`;
+      await civ2.deleteBranch(repo, branch);
+      const message = `<https://github/com/sutoiku/${repo}/branches|Branch ${branch}> of <https://github/com/sutoiku/${repo}|${repo}> was merged, I deleted it.`;
       return robot.messageRoom(room, message);
     } catch (ex) {
       robot.messageRoom(room, `An error occured (${ex.message}).`);
