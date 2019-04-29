@@ -21,51 +21,49 @@
 //
 // Author:
 //   Yan[@sutoiku.com>]
-const civ2 = require("./civ2-commands");
-const gh = require("./github");
+const civ2 = require('./civ2-commands');
+const gh = require('./github');
 
 module.exports = function(robot) {
   const targets = [
-    { trigger: "civ1", method: civ2.deployV1 },
-    { trigger: "dockercloud", method: civ2.deployDocker },
-    { trigger: "kubernetes", method: civ2.deployK8s }
+    { trigger: 'civ1', method: civ2.deployV1 },
+    { trigger: 'dockercloud', method: civ2.deployDocker },
+    { trigger: 'kubernetes', method: civ2.deployK8s }
   ];
   for (const target of targets) {
     const re = new RegExp(`deploy to ${target.trigger} ?(\S*)`);
-    robot.hear(re, async msg => {
-      const tag = msg.match[1] || "release-candidate";
+    robot.hear(re, async (msg) => {
+      const tag = msg.match[1] || 'release-candidate';
       try {
         await target.method(tag);
-        const tagTxt = tag ? `tag ${tag}` : "default tag";
-        msg.reply(
-          `The deployment of ${tagTxt} to ${target.trigger} is scheduled.`
-        );
+        const tagTxt = tag ? `tag ${tag}` : 'default tag';
+        msg.reply(`The deployment of ${tagTxt} to ${target.trigger} is scheduled.`);
       } catch (ex) {
         msg.reply(`Sorry, something went wrong: ${ex.message}`);
       }
     });
   }
-  robot.hear(/release stoic (\S*)/, async msg => {
+  robot.hear(/release stoic (\S*)/, async (msg) => {
     const tag = msg.match[1];
     try {
       await civ2.release(tag, true);
-      msg.reply("Release in progress.");
+      msg.reply('Release in progress.');
     } catch (ex) {
       msg.reply(`Sorry, something went wrong: ${err.message}`);
     }
   });
 
-  robot.hear(/rollback stoic (\S*)/, async msg => {
+  robot.hear(/rollback stoic (\S*)/, async (msg) => {
     const tag = msg.match[1];
     try {
       await civ2.release(tag, false);
-      msg.reply("Rollback in progress.");
+      msg.reply('Rollback in progress.');
     } catch (ex) {
       msg.reply(`Sorry, something went wrong: ${err.message}`);
     }
   });
 
-  robot.hear(/update yourself please/, async msg => {
+  robot.hear(/update yourself please/, async (msg) => {
     try {
       await civ2.updateBot();
       msg.reply("I'm now refreshing myself, master.");
@@ -74,14 +72,14 @@ module.exports = function(robot) {
     }
   });
 
-  robot.respond(/archive (\S*) (\S*)/, async msg => {
+  robot.respond(/archive (\S*) (\S*)/, async (msg) => {
     const repo = msg.match[1],
       branch = msg.match[2];
     console.log(`repo: ${repo}, branch:${branch}`);
     try {
       const body = await civ2.archive(repo, branch);
       const bodyContent = JSON.parse(body);
-      if (bodyContent === "ok") {
+      if (bodyContent === 'ok') {
         const message = `<https://github/com/sutoiku/${repo}/branches|Branch> ${branch} is now renamed archive/${branch}.`;
         return msg.send(message);
       }
@@ -92,34 +90,34 @@ module.exports = function(robot) {
     }
   });
 
-  robot.hear(/create feature instance (\S*)/, async msg => {
+  robot.hear(/create feature instance (\S*)/, async (msg) => {
     const branch = msg.match[1];
     try {
       await civ2.createFeatureCluster(branch);
-      msg.reply("Creation in progress.");
+      msg.reply('Creation in progress.');
     } catch (ex) {
       msg.reply(`Sorry, something went wrong: ${err.message}`);
     }
   });
 
-  robot.hear(/destroy feature instance (\S*)/, async msg => {
+  robot.hear(/destroy feature instance (\S*)/, async (msg) => {
     const branch = msg.match[1];
     try {
       await civ2.destroyFeatureCluster(branch);
-      msg.reply("Destruction in progress.");
+      msg.reply('Destruction in progress.');
     } catch (ex) {
       msg.reply(`Sorry, something went wrong: ${ex.message}`);
     }
   });
 
-  robot.hear(/branch status (\S*)/, async msg => {
+  robot.hear(/branch status (\S*)/, async (msg) => {
     const branchName = msg.match[1];
     msg.reply(`Checking branch ${branchName}...`);
     const message = await civ2.getBranchInformation(branchName);
     msg.reply(message);
   });
 
-  robot.hear(/create pull requests (\S*)/, async msg => {
+  robot.hear(/create pull requests (\S*)/, async (msg) => {
     const branchName = msg.match[1];
     msg.reply(`Creating PRs for branch ${branchName}...`);
     //TODO assign the PR to creator ?
@@ -128,20 +126,19 @@ module.exports = function(robot) {
     msg.reply(`${message}\n${status}`);
   });
 
-  robot.router.post("/hubot/civ2/github-webhook", async (req, res) => {
-    const room = "#testing-ci";
-    const data =
-      req.body.payload != null ? JSON.parse(req.body.payload) : req.body;
+  robot.router.post('/hubot/civ2/github-webhook', async (req, res) => {
+    const room = '#testing-ci';
+    const data = req.body.payload != null ? JSON.parse(req.body.payload) : req.body;
     const prMerge = gh.getPRMerge(data);
-    console.log("Got a webhook alert.");
+    console.log('Got a webhook alert.');
 
     if (!prMerge) {
-      return res.send("OK");
+      return res.send('OK');
     }
 
     const { repo, branch, id, base } = prMerge;
 
-    if (base !== "master") {
+    if (base !== 'master') {
       const msg = `The PR ${repo}#${id} was not forked from master. Won't delete ${branch}.`;
       robot.messageRoom(room, msg);
       return console.log(msg);
@@ -155,7 +152,7 @@ module.exports = function(robot) {
       return robot.messageRoom(room, message);
     } catch (ex) {
       robot.messageRoom(room, `An error occured (${ex.message}).`);
-      return res.statusCode(500).send("Error");
+      return res.statusCode(500).send('Error');
     }
   });
 };

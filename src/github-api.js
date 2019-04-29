@@ -130,11 +130,7 @@ async function getBranchPr(repo, branchName) {
 }
 
 async function deleteBranch(repoName, branchName) {
-  return requestOnRepo(
-    repo,
-    "DELETE",
-    `/repos/${repo.__fullname}/git/refs/heads/${branchName}`
-  );
+  return requestOnRepo(repo, 'DELETE', `/repos/${repo.__fullname}/git/refs/heads/${branchName}`);
 }
 
 // HELPERS
