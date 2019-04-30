@@ -1,26 +1,26 @@
 const REPOS = [
-  "ryu",
-  "kyu",
-  "particula",
-  "praxis",
-  "lorem",
-  "fermat",
-  "officer",
-  "principia",
-  "demos.stoic",
-  "grid",
-  "core.stoic",
-  "marcus",
-  "pictura"
+  'ryu',
+  'kyu',
+  'particula',
+  'praxis',
+  'lorem',
+  'fermat',
+  'officer',
+  'principia',
+  'demos.stoic',
+  'grid',
+  'core.stoic',
+  'marcus',
+  'pictura'
 ];
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-const GITHUB_ORG_NAME = "sutoiku";
+const GITHUB_ORG_NAME = 'sutoiku';
 
-const GitHub = require("github-api");
+const GitHub = require('github-api');
 const gh = new GitHub({
   token: GITHUB_TOKEN
 });
-const helpers = require("./helpers");
+const helpers = require('./helpers');
 
 module.exports = {
   getAllReposBranchInformation,
@@ -55,23 +55,19 @@ async function createMissingPrs(branchName, userName) {
     return null;
   }
 
-  const prText = getPrText(
-    branchName,
-    userName,
-    Object.keys(branchInformation)
-  );
+  const prText = getPrText(branchName, userName, Object.keys(branchInformation));
 
   const user = helpers.getUserFromSlackLogin(userName);
-  console.log("USER", userName, user);
+  console.log('USER', userName, user);
   const assignees = user && [user.githubLogin];
-  console.log("ASSIGNEES", assignees);
+  console.log('ASSIGNEES', assignees);
 
   const created = {};
   for (const repoName of prsToCreate) {
     const prSpec = {
       title: branchName,
       head: branchName,
-      base: "master",
+      base: 'master',
       body: prText,
       assignees
     };
@@ -87,8 +83,10 @@ async function getAllReposBranchInformation(branchName) {
   for (const repoName of REPOS) {
     const repo = gh.getRepo(GITHUB_ORG_NAME, repoName);
     const repoData = await repoHasBranch(repo, branchName);
-    if (repoData === null) {continue}
-      allBranches[repoName] = Object.assign({repo}, repoData);
+    if (repoData === null) {
+      continue;
+    }
+    allBranches[repoName] = Object.assign({ repo }, repoData);
   }
   return allBranches;
 }
@@ -107,7 +105,7 @@ async function repoHasBranch(repo, branchName) {
       reviews
     };
   } catch (error) {
-    if (error.message.startsWith("404")) {
+    if (error.message.startsWith('404')) {
       return null;
     }
     throw error;
@@ -127,13 +125,13 @@ async function getBranchPr(repo, branchName) {
 async function deleteBranch(repoName, branchName) {
   const repo = gh.getRepo(GITHUB_ORG_NAME, repoName);
   const pathname = `/repos/${repo.__fullname}/git/refs/heads/${branchName}`;
-  return requestOnRepo(repo, "DELETE", pathname);
+  return requestOnRepo(repo, 'DELETE', pathname);
 }
 
 // HELPERS
 function getPrText(branchName, userName, repos) {
-  const ptLink = getPTLink(branchName) || "No PT";
-  const strRepos = repos.map(it => "`" + it + "`").join(",");
+  const ptLink = getPTLink(branchName) || 'No PT';
+  const strRepos = repos.map((it) => '`' + it + '`').join(',');
   const user = helpers.getUserFromSlackLogin(userName);
   const displayName = user ? user.firstName : userName;
   return `This pull request has been created by ${displayName} via the bot.\n\n# PT\n${ptLink}\n\n# REPOS\n${strRepos}`;
@@ -154,15 +152,11 @@ async function getReviews(repo, pr) {
     return;
   }
 
-  return requestOnRepo(
-    repo,
-    "GET",
-    `/repos/${repo.__fullname}/pulls/${pr.number}/reviews`
-  );
+  return requestOnRepo(repo, 'GET', `/repos/${repo.__fullname}/pulls/${pr.number}/reviews`);
 }
 
 function requestOnRepo(repo, method, pathname) {
   return new Promise(function(resolve, reject) {
-    repo._request(method, pathname, null, (err, body) => err ? reject(err) : resolve(body));
+    repo._request(method, pathname, null, (err, body) => (err ? reject(err) : resolve(body)));
   });
 }

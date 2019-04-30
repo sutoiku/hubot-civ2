@@ -1,6 +1,6 @@
-const expect = require("chai").expect;
-const gh = require("../src/github");
-describe("github", () => {
+const expect = require('chai').expect;
+const gh = require('../src/github');
+describe('github', () => {
   const payload = {
     id: 123,
     action: 'closed',

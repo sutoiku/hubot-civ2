@@ -1,5 +1,5 @@
-const rp = require("request-promise");
-const ghApi = require("./github-api");
+const rp = require('request-promise');
+const ghApi = require('./github-api');
 
 const CI_API_ROOT = process.env.CI_API_ROOT;
 const token = process.env.CI_API_AUTH;
@@ -8,14 +8,14 @@ const headers = {
 };
 
 exports.deployV1 = function(tag) {
-  return buildJob("Deployment/ci-v1", tag);
+  return buildJob('Deployment/ci-v1', tag);
 };
 
 exports.deployDocker = function(tag) {
-  return buildJob("Release/marcus-to-docker-cloud", tag);
+  return buildJob('Release/marcus-to-docker-cloud', tag);
 };
 exports.deployK8s = function(tag) {
-  return buildJob("Release/marcus-to-kubernetes", tag);
+  return buildJob('Release/marcus-to-kubernetes', tag);
 };
 
 exports.release = function(tag, UpdatePivotalAndGitHub) {
@@ -24,11 +24,11 @@ exports.release = function(tag, UpdatePivotalAndGitHub) {
         UpdatePivotalAndGitHub
       }
     : undefined;
-  return buildJob("Release/global-release", tag, additionalParameters);
+  return buildJob('Release/global-release', tag, additionalParameters);
 };
 
 exports.updateBot = function() {
-  return buildJob("Chore/hubot/stoic-hubot/master");
+  return buildJob('Chore/hubot/stoic-hubot/master');
 };
 
 exports.archive = function(repo, branch) {
@@ -43,14 +43,14 @@ exports.deleteBranch = function(repo, branch) {
   return ghApi.deleteBranch(repo, branch);
 };
 
-exports.createFeatureCluster = FEATURE => {
-  return buildJob("Chore/feature-clusters/create", undefined, {
+exports.createFeatureCluster = (FEATURE) => {
+  return buildJob('Chore/feature-clusters/create', undefined, {
     FEATURE
   });
 };
 
-exports.destroyFeatureCluster = FEATURE => {
-  return buildJob("Chore/feature-clusters/destroy", undefined, {
+exports.destroyFeatureCluster = (FEATURE) => {
+  return buildJob('Chore/feature-clusters/destroy', undefined, {
     FEATURE
   });
 };
@@ -71,8 +71,8 @@ exports.createPRs = async function(branchName, userName) {
     //console.log(created);
 
     const strCreated = Object.keys(created)
-      .map(it => "`" + it + "`")
-      .join(",");
+      .map((it) => '`' + it + '`')
+      .join(',');
     return `Pull Request created on ${strCreated}`;
   } catch (error) {
     console.error(error);
@@ -82,7 +82,7 @@ exports.createPRs = async function(branchName, userName) {
 
 function buildJob(name, tag, additionalParameters) {
   const baseUrl = getBaseUrl();
-  const jenkins = require("jenkins")({
+  const jenkins = require('jenkins')({
     baseUrl,
     crumbIssuer: true,
     promisify: true
@@ -97,7 +97,7 @@ function buildJob(name, tag, additionalParameters) {
     };
   }
   if (additionalParameters !== undefined) {
-    if (typeof options !== "object") {
+    if (typeof options !== 'object') {
       options = {
         name: options,
         parameters: {}
@@ -112,8 +112,8 @@ function getBaseUrl() {
   const HUBOT_JENKINS_AUTH = process.env.HUBOT_JENKINS_AUTH,
     HUBOT_JENKINS_URL = process.env.HUBOT_JENKINS_URL;
 
-  return HUBOT_JENKINS_URL.includes("://")
-    ? HUBOT_JENKINS_URL.replace("://", `://${HUBOT_JENKINS_AUTH}@`)
+  return HUBOT_JENKINS_URL.includes('://')
+    ? HUBOT_JENKINS_URL.replace('://', `://${HUBOT_JENKINS_AUTH}@`)
     : `https://${HUBOT_JENKINS_AUTH}@${HUBOT_JENKINS_URL}`;
 }
 
@@ -134,7 +134,7 @@ function formatBranchInformation(branchName, status) {
     result.push(getRepoReport(repo, branchName, data));
   }
 
-  return result.join("\n");
+  return result.join('\n');
 }
 
 function getRepoReport(repoName, branchName, data) {
@@ -143,7 +143,7 @@ function getRepoReport(repoName, branchName, data) {
   const repoUrl = `https://github.com/sutoiku/${repoName}/tree/${branchName}`;
 
   const statusReport = getStatusReport(data);
-  const statusMessage = "Statuses: " + statusReport.message;
+  const statusMessage = 'Statuses: ' + statusReport.message;
 
   return ` * <${repoUrl}|${repoName}> : ${prStatus} - ${statusMessage}`;
 }
@@ -154,15 +154,14 @@ function getStatusReport({ status }) {
   for (const stat of Object.values(statuses)) {
     const { state, context } = stat;
 
-    if (state === "success") {
+    if (state === 'success') {
       okStatus++;
     }
   }
   const totalStatus = Object.keys(statuses).length;
 
   return {
-    message:
-      okStatus === totalStatus ? "All OK" : `${okStatus}/${totalStatus} OK`,
+    message: okStatus === totalStatus ? 'All OK' : `${okStatus}/${totalStatus} OK`,
     mergeable: okStatus === totalStatus
   };
 }
@@ -171,10 +170,7 @@ function keepLatestStatus(statuses) {
   const result = {};
   for (const stat of statuses) {
     const { context, updated_at, state } = stat;
-    if (
-      !result[context] ||
-      new Date(updated_at) > new Date(result[context].updated_at)
-    ) {
+    if (!result[context] || new Date(updated_at) > new Date(result[context].updated_at)) {
       result[context] = stat;
     }
   }
@@ -186,11 +182,11 @@ function getPRStatus({ pr }) {
     const { number, state, html_url } = pr;
     return `<${html_url}|PR #${number} (${state})>`;
   }
-  return "no PR";
+  return 'no PR';
 }
 
 function getReviewsStatus({ reviews }) {
-  const statuses = reviews.map(it => it.state).reduce((acc, it) => {
+  const statuses = reviews.map((it) => it.state).reduce((acc, it) => {
     if (!acc[it]) {
       acc[it] = 0;
     }
@@ -204,7 +200,7 @@ function getReviewsStatus({ reviews }) {
   }
 
   const mergeable = !!statuses.APPROVED && Object.keys(statuses).length == 1;
-  const message = report.join(",");
+  const message = report.join(',');
   return { message, mergeable };
 }
 /*
