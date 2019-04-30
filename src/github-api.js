@@ -87,14 +87,8 @@ async function getAllReposBranchInformation(branchName) {
   for (const repoName of REPOS) {
     const repo = gh.getRepo(GITHUB_ORG_NAME, repoName);
     const repoData = await repoHasBranch(repo, branchName);
-    if (repoData !== null) {
-      allBranches[repoName] = Object.assign(
-        {
-          repo
-        },
-        repoData
-      );
-    }
+    if (repoData === null) {continue}
+      allBranches[repoName] = Object.assign({repo}, repoData);
   }
   return allBranches;
 }
@@ -132,11 +126,8 @@ async function getBranchPr(repo, branchName) {
 
 async function deleteBranch(repoName, branchName) {
   const repo = gh.getRepo(GITHUB_ORG_NAME, repoName);
-  return requestOnRepo(
-    repo,
-    "DELETE",
-    `/repos/${repo.__fullname}/git/refs/heads/${branchName}`
-  );
+  const pathname = `/repos/${repo.__fullname}/git/refs/heads/${branchName}`;
+  return requestOnRepo(repo, "DELETE", pathname);
 }
 
 // HELPERS
@@ -172,11 +163,6 @@ async function getReviews(repo, pr) {
 
 function requestOnRepo(repo, method, pathname) {
   return new Promise(function(resolve, reject) {
-    repo._request(method, pathname, null, (err, body) => {
-      if (err) {
-        return reject(err);
-      }
-      resolve(body);
-    });
+    repo._request(method, pathname, null, (err, body) => err ? reject(err) : resolve(body));
   });
 }
