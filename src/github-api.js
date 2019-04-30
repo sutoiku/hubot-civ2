@@ -14,16 +14,19 @@ const REPOS = [
   "pictura"
 ];
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const GITHUB_ORG_NAME = "sutoiku";
+
 const GitHub = require("github-api");
 const gh = new GitHub({
   token: GITHUB_TOKEN
 });
-const helpers = require('./helpers');
+const helpers = require("./helpers");
 
 module.exports = {
   getAllReposBranchInformation,
   getPTLink,
-  createMissingPrs
+  createMissingPrs,
+  deleteBranch
 };
 
 async function mergePrs(branchName) {
@@ -59,10 +62,10 @@ async function createMissingPrs(branchName, userName) {
   );
 
   const user = helpers.getUserFromSlackLogin(userName);
-  console.log('USER', userName, user);
+  console.log("USER", userName, user);
   const assignees = user && [user.githubLogin];
-  console.log('ASSIGNEES', assignees);
-  
+  console.log("ASSIGNEES", assignees);
+
   const created = {};
   for (const repoName of prsToCreate) {
     const prSpec = {
@@ -73,9 +76,7 @@ async function createMissingPrs(branchName, userName) {
       assignees
     };
 
-    const {
-      repo
-    } = branchInformation[repoName];
+    const { repo } = branchInformation[repoName];
     created[repoName] = await repo.createPullRequest(prSpec);
   }
   return created;
@@ -84,25 +85,18 @@ async function createMissingPrs(branchName, userName) {
 async function getAllReposBranchInformation(branchName) {
   const allBranches = {};
   for (const repoName of REPOS) {
-    const repo = gh.getRepo("sutoiku", repoName);
+    const repo = gh.getRepo(GITHUB_ORG_NAME, repoName);
     const repoData = await repoHasBranch(repo, branchName);
-    if (repoData !== null) {
-      allBranches[repoName] = Object.assign({
-        repo
-      }, repoData);
-    }
+    if (repoData === null) {continue}
+      allBranches[repoName] = Object.assign({repo}, repoData);
   }
   return allBranches;
 }
 
 async function repoHasBranch(repo, branchName) {
   try {
-    const {
-      data: branch
-    } = await repo.getBranch(branchName);
-    const {
-      data: status
-    } = await repo.listStatuses(branchName);
+    const { data: branch } = await repo.getBranch(branchName);
+    const { data: status } = await repo.listStatuses(branchName);
     const pr = await getBranchPr(repo, branchName);
     const reviews = await getReviews(repo, pr);
 
@@ -130,6 +124,12 @@ async function getBranchPr(repo, branchName) {
   return null;
 }
 
+async function deleteBranch(repoName, branchName) {
+  const repo = gh.getRepo(GITHUB_ORG_NAME, repoName);
+  const pathname = `/repos/${repo.__fullname}/git/refs/heads/${branchName}`;
+  return requestOnRepo(repo, "DELETE", pathname);
+}
+
 // HELPERS
 function getPrText(branchName, userName, repos) {
   const ptLink = getPTLink(branchName) || "No PT";
@@ -149,12 +149,20 @@ function getPtIdFromBranchName(branchName) {
   return match && match[0];
 }
 
-async function getReviews(repo, pr){
-  if(!pr){return}
-  return new  Promise(function(resolve, reject) {
-    repo._request('GET', `/repos/${repo.__fullname}/pulls/${pr.number}/reviews`, null, (err, body)=>{
-      resolve(body)
-    });
+async function getReviews(repo, pr) {
+  if (!pr) {
+    return;
+  }
 
+  return requestOnRepo(
+    repo,
+    "GET",
+    `/repos/${repo.__fullname}/pulls/${pr.number}/reviews`
+  );
+}
+
+function requestOnRepo(repo, method, pathname) {
+  return new Promise(function(resolve, reject) {
+    repo._request(method, pathname, null, (err, body) => err ? reject(err) : resolve(body));
   });
 }
