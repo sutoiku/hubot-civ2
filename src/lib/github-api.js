@@ -81,8 +81,13 @@ async function createMissingPrs(branchName, userName) {
     const { repo } = branchInformation[repoName];
     created[repoName] = await repo.createPullRequest(prSpec);
 
-    //set assignee is done via issues API
-    await repo.editIssue(created[repoName].number, { assignees });
+    try {
+      //set assignee is done via issues API
+      await repo.editIssue(created[repoName].number, { assignees });
+    } catch (ex) {
+      console.error('ERROR while assigning', ex);
+      console.log(repo);
+    }
   }
   return created;
 }
@@ -146,7 +151,7 @@ async function getPrText(branchName, userName, repos) {
 
   if (!pivotalTracker) {
     const ptLink = getPTLink(branchName);
-    const description = `${message}# PT\\n${ptLink}\\n\\n`;
+    const description = `${message}\n\n# PT\\n${ptLink}\\n\\n`;
     return { description };
   }
 
