@@ -142,9 +142,11 @@ async function getPrText(branchName, userName, repos) {
   const strRepos = repos.map((it) => '`' + it + '`').join(',');
   const user = helpers.getUserFromSlackLogin(userName);
   const displayName = user ? user.firstName : userName;
-  const description = `This pull request has been created by ${displayName} via the bot.\n\n# PT\n${ptLink}\n\n# REPOS\n${strRepos}`;
+  const message = `This pull request has been created by ${displayName} via the bot.\n\n# REPOS\n${strRepos}`;
 
   if (!pivotalTracker) {
+    const ptLink = getPTLink(branchName);
+    const description = `${message}# PT\\n${ptLink}\\n\\n`;
     return { description };
   }
 
@@ -156,7 +158,7 @@ async function getPrTextWithPivotal(branchName, message) {
 
   const pt = await pivotalTracker.getStory(ptId);
 
-  const description = (message = `\n\n# Description\n${pt.description}`);
+  const description = `${message}\n\n# Description\n${pt.description}`;
   return { description, name };
 }
 
