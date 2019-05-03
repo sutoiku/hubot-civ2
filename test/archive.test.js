@@ -6,7 +6,7 @@ describe('Archive', () => {
   let Archiver;
   beforeEach(() => {
     process.env.CI_API_ROOT = 'http://fakeapi/';
-    Archiver = require('../src/civ2-commands');
+    Archiver = require('../src/lib/civ2-commands');
   });
   it('should get the right repo and branch', (done) => {
     nock('http://fakeapi')

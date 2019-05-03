@@ -1,5 +1,5 @@
 const expect = require('chai').expect;
-const gh = require('../src/github');
+const gh = require('../src/lib/github');
 describe('github', () => {
   const payload = {
     id: 123,

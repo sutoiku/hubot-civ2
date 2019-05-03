@@ -21,8 +21,8 @@
 //
 // Author:
 //   Yan[@sutoiku.com>]
-const civ2 = require('./civ2-commands');
-const gh = require('./github');
+const civ2 = require('./lib/civ2-commands');
+const gh = require('./lib/github');
 
 module.exports = function(robot) {
   const targets = [

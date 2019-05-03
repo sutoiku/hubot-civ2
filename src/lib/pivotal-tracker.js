@@ -1,6 +1,6 @@
 "use strict";
 const querystring = require("querystring");
-const Server = require("./helpers/pivotal-server");
+const Server = require("./pivotal-server");
 const debug = require("debug")("hubot:civ2:pivotal");
 
 class PivotalTracker {

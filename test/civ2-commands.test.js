@@ -8,7 +8,7 @@ describe('civ2', function() {
   it('Adds https protocol if missing', (done) => {
     process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
     process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tlda';
-    civ2 = require('../src/civ2-commands.js');
+    civ2 = require('../src/lib/civ2-commands.js');
     createApiHandlers(true, '/job/Deployment/job/ci-v1/build');
 
     civ2
@@ -23,7 +23,7 @@ describe('civ2', function() {
   it('keeps existing protocol if present', (done) => {
     process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
     process.env.HUBOT_JENKINS_URL = 'http://myjenkins.mydomain.tldx';
-    civ2 = require('../src/civ2-commands.js');
+    civ2 = require('../src/lib/civ2-commands.js');
     createApiHandlers(false);
     nock(`http://${process.env.HUBOT_JENKINS_AUTH}@myjenkins.mydomain.tldx`)
       .post('/job/Deployment/job/ci-v1/build')
@@ -41,7 +41,7 @@ describe('civ2', function() {
     it('calls the right Jenkins job', (done) => {
       process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
       process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tld';
-      civ2 = require('../src/civ2-commands.js');
+      civ2 = require('../src/lib/civ2-commands.js');
       createApiHandlers(true, '/job/Deployment/job/ci-v1/build');
 
       civ2
@@ -56,7 +56,7 @@ describe('civ2', function() {
     it('passes tag if present', (done) => {
       process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
       process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tld';
-      civ2 = require('../src/civ2-commands.js');
+      civ2 = require('../src/lib/civ2-commands.js');
       createApiHandlers(true, '/job/Deployment/job/ci-v1/buildWithParameters?tag=pouet');
 
       civ2
@@ -73,7 +73,7 @@ describe('civ2', function() {
     it('calls the right Jenkins job', (done) => {
       process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
       process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tld';
-      civ2 = require('../src/civ2-commands.js');
+      civ2 = require('../src/lib/civ2-commands.js');
       createApiHandlers(true, '/job/Release/job/marcus-to-docker-cloud/build');
 
       civ2
@@ -88,7 +88,7 @@ describe('civ2', function() {
     it('passes tag if present', (done) => {
       process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
       process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tld';
-      civ2 = require('../src/civ2-commands.js');
+      civ2 = require('../src/lib/civ2-commands.js');
       createApiHandlers(true, '/job/Release/job/marcus-to-docker-cloud/buildWithParameters?tag=pouet');
 
       civ2
@@ -105,7 +105,7 @@ describe('civ2', function() {
     it('calls the right Jenkins job', (done) => {
       process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
       process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tld';
-      civ2 = require('../src/civ2-commands.js');
+      civ2 = require('../src/lib/civ2-commands.js');
       createApiHandlers(true, '/job/Release/job/marcus-to-kubernetes/build');
 
       civ2
@@ -120,7 +120,7 @@ describe('civ2', function() {
     it('passes tag if present', (done) => {
       process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
       process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tld';
-      civ2 = require('../src/civ2-commands.js');
+      civ2 = require('../src/lib/civ2-commands.js');
       createApiHandlers(true, '/job/Release/job/marcus-to-kubernetes/buildWithParameters?tag=pouet');
 
       civ2
@@ -137,7 +137,7 @@ describe('civ2', function() {
     it('calls the right Jenkins job', (done) => {
       process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
       process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tld';
-      civ2 = require('../src/civ2-commands.js');
+      civ2 = require('../src/lib/civ2-commands.js');
       createApiHandlers(true, '/job/Release/job/global-release/build');
 
       civ2
@@ -151,7 +151,7 @@ describe('civ2', function() {
     it('passes tag if present', (done) => {
       process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
       process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tld';
-      civ2 = require('../src/civ2-commands.js');
+      civ2 = require('../src/lib/civ2-commands.js');
       createApiHandlers(true, '/job/Release/job/global-release/buildWithParameters?tag=pouet');
 
       civ2
@@ -168,7 +168,7 @@ describe('civ2', function() {
     it('passes the right tag', (done) => {
       process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
       process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tld';
-      civ2 = require('../src/civ2-commands.js');
+      civ2 = require('../src/lib/civ2-commands.js');
       createApiHandlers(true, '/job/Chore/job/feature-clusters/job/create/buildWithParameters?FEATURE=pouet');
 
       civ2
@@ -185,7 +185,7 @@ describe('civ2', function() {
     it('passes the right tag', (done) => {
       process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
       process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tld';
-      civ2 = require('../src/civ2-commands.js');
+      civ2 = require('../src/lib/civ2-commands.js');
       createApiHandlers(true, '/job/Chore/job/feature-clusters/job/destroy/buildWithParameters?FEATURE=pouet');
 
       civ2
@@ -202,7 +202,7 @@ describe('civ2', function() {
     let civ2;
 
     beforeEach(() => {
-      civ2 = require('../src/civ2-commands.js');
+      civ2 = require('../src/lib/civ2-commands.js');
     });
 
     describe('deleteBranch', () => {

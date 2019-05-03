@@ -5,7 +5,7 @@ const nock = require('nock');
 const nockBack = require('nock').back;
 nockBack.setMode('lockdown');
 
-const PivotalTracker = require('../src/pivotal-tracker');
+const PivotalTracker = require('../src/lib/pivotal-tracker');
 const testStories = {
   'filter-': [
     {
