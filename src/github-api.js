@@ -13,6 +13,8 @@ const REPOS = [
   'marcus',
   'pictura'
 ];
+
+const PivotalTracker = require('./pivotal-tracker');
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GITHUB_ORG_NAME = 'sutoiku';
 
@@ -21,6 +23,7 @@ const gh = new GitHub({
   token: GITHUB_TOKEN
 });
 const helpers = require('./helpers');
+const pivotalTracker = initializePivotalTracker();
 
 module.exports = {
   getAllReposBranchInformation,
@@ -55,7 +58,7 @@ async function createMissingPrs(branchName, userName) {
     return null;
   }
 
-  const prText = getPrText(branchName, userName, Object.keys(branchInformation));
+  const prText = await getPrText(branchName, userName, Object.keys(branchInformation));
 
   const user = helpers.getUserFromSlackLogin(userName);
   console.log('USER', userName, user);
@@ -68,12 +71,18 @@ async function createMissingPrs(branchName, userName) {
       title: branchName,
       head: branchName,
       base: 'master',
-      body: prText,
-      assignees
+      body: prText.description
     };
+
+    if (prText.name) {
+      prSpec.title = prText.name;
+    }
 
     const { repo } = branchInformation[repoName];
     created[repoName] = await repo.createPullRequest(prSpec);
+
+    //set assignee is done via issues API
+    await repo.editIssue(created[repoName].number, { assignees });
   }
   return created;
 }
@@ -129,12 +138,26 @@ async function deleteBranch(repoName, branchName) {
 }
 
 // HELPERS
-function getPrText(branchName, userName, repos) {
-  const ptLink = getPTLink(branchName) || 'No PT';
+async function getPrText(branchName, userName, repos) {
   const strRepos = repos.map((it) => '`' + it + '`').join(',');
   const user = helpers.getUserFromSlackLogin(userName);
   const displayName = user ? user.firstName : userName;
-  return `This pull request has been created by ${displayName} via the bot.\n\n# PT\n${ptLink}\n\n# REPOS\n${strRepos}`;
+  const description = `This pull request has been created by ${displayName} via the bot.\n\n# PT\n${ptLink}\n\n# REPOS\n${strRepos}`;
+
+  if (!pivotalTracker) {
+    return { description };
+  }
+
+  return getPrTextWithPivotal(branchName, message);
+}
+
+async function getPrTextWithPivotal(branchName, message) {
+  const ptId = getPtIdFromBranchName(branchName);
+
+  const pt = await pivotalTracker.getStory(ptId);
+
+  const description = (message = `\n\n# Description\n${pt.description}`);
+  return { description, name };
 }
 
 function getPTLink(branchName) {
@@ -159,4 +182,13 @@ function requestOnRepo(repo, method, pathname) {
   return new Promise(function(resolve, reject) {
     repo._request(method, pathname, null, (err, body) => (err ? reject(err) : resolve(body)));
   });
+}
+
+function initializePivotalTracker() {
+  const { PIVOTAL_TRACKER_TOKEN, PIVOTAL_TRACKER_PROJECT } = process.env;
+  if (!PIVOTAL_TRACKER_PROJECT || !PIVOTAL_TRACKER_PROJECT) {
+    return;
+  }
+
+  return new PivotalTracker(PIVOTAL_TRACKER_TOKEN, PIVOTAL_TRACKER_PROJECT);
 }
