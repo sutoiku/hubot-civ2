@@ -151,7 +151,7 @@ async function getPrText(branchName, userName, repos) {
 
   if (!pivotalTracker) {
     const ptLink = getPTLink(branchName);
-    const description = `${message}\n\n# PT\\n${ptLink}\\n\\n`;
+    const description = `${message}\n\n# PT\n${ptLink}\n\n`;
     return { description };
   }
 
