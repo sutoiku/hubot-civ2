@@ -130,7 +130,6 @@ module.exports = function(robot) {
     const room = '#testing-ci';
     const data = req.body.payload != null ? JSON.parse(req.body.payload) : req.body;
     const prMerge = gh.getPRMerge(data);
-    console.log('Got a webhook alert.');
 
     if (!prMerge) {
       return res.send('OK');
