@@ -160,9 +160,11 @@ async function getPrText(branchName, userName, repos) {
 
 async function getPrTextWithPivotal(branchName, message) {
   const ptId = getPtIdFromBranchName(branchName);
+  if (!ptId) {
+    return { description: message };
+  }
 
   const pt = await pivotalTracker.getStory(ptId);
-
   const description = `${message}\n\n# Description\n${pt.description}`;
   return { description, name };
 }

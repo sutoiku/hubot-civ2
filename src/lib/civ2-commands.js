@@ -1,11 +1,9 @@
 const rp = require('request-promise');
 const ghApi = require('./github-api');
+const Jenkins = require('jenkins');
 
-const CI_API_ROOT = process.env.CI_API_ROOT;
-const token = process.env.CI_API_AUTH;
-const headers = {
-  Authorization: `Basic ${token}`
-};
+const { CI_API_ROOT, CI_API_AUTH: token } = process.env;
+const headers = { Authorization: `Basic ${token}` };
 
 exports.deployV1 = function(tag) {
   return buildJob('Deployment/ci-v1', tag);
@@ -19,11 +17,7 @@ exports.deployK8s = function(tag) {
 };
 
 exports.release = function(tag, UpdatePivotalAndGitHub) {
-  const additionalParameters = UpdatePivotalAndGitHub
-    ? {
-        UpdatePivotalAndGitHub
-      }
-    : undefined;
+  const additionalParameters = UpdatePivotalAndGitHub ? { UpdatePivotalAndGitHub } : undefined;
   return buildJob('Release/global-release', tag, additionalParameters);
 };
 
@@ -34,9 +28,7 @@ exports.updateBot = function() {
 exports.archive = function(repo, branch) {
   const encodedBranch = encodeURIComponent(branch);
   const url = `${CI_API_ROOT}archive/${repo}/${encodedBranch}`;
-  return rp(url, {
-    headers
-  });
+  return rp(url, { headers });
 };
 
 exports.deleteBranch = function(repo, branch) {
@@ -44,15 +36,11 @@ exports.deleteBranch = function(repo, branch) {
 };
 
 exports.createFeatureCluster = (FEATURE) => {
-  return buildJob('Chore/feature-clusters/create', undefined, {
-    FEATURE
-  });
+  return buildJob('Chore/feature-clusters/create', undefined, { FEATURE });
 };
 
 exports.destroyFeatureCluster = (FEATURE) => {
-  return buildJob('Chore/feature-clusters/destroy', undefined, {
-    FEATURE
-  });
+  return buildJob('Chore/feature-clusters/destroy', undefined, { FEATURE });
 };
 
 exports.getBranchInformation = async function(branchName) {
@@ -82,26 +70,14 @@ exports.createPRs = async function(branchName, userName) {
 
 function buildJob(name, tag, additionalParameters) {
   const baseUrl = getBaseUrl();
-  const jenkins = require('jenkins')({
-    baseUrl,
-    crumbIssuer: true,
-    promisify: true
-  });
+  const jenkins = new Jenkins({ baseUrl, crumbIssuer: true, promisify: true });
   let options = name;
   if (tag !== undefined) {
-    options = {
-      name: name,
-      parameters: {
-        tag
-      }
-    };
+    options = { name: name, parameters: { tag } };
   }
   if (additionalParameters !== undefined) {
     if (typeof options !== 'object') {
-      options = {
-        name: options,
-        parameters: {}
-      };
+      options = { name: options, parameters: {} };
     }
     Object.assign(options.parameters, additionalParameters);
   }
@@ -109,8 +85,7 @@ function buildJob(name, tag, additionalParameters) {
 }
 
 function getBaseUrl() {
-  const HUBOT_JENKINS_AUTH = process.env.HUBOT_JENKINS_AUTH,
-    HUBOT_JENKINS_URL = process.env.HUBOT_JENKINS_URL;
+  const { HUBOT_JENKINS_AUTH, HUBOT_JENKINS_URL } = process.env;
 
   return HUBOT_JENKINS_URL.includes('://')
     ? HUBOT_JENKINS_URL.replace('://', `://${HUBOT_JENKINS_AUTH}@`)
@@ -139,7 +114,6 @@ function formatBranchInformation(branchName, status) {
 
 function getRepoReport(repoName, branchName, data) {
   const prStatus = getPRStatus(data);
-  //const reviewsStatus = getReviewsStatus(data);
   const repoUrl = `https://github.com/sutoiku/${repoName}/tree/${branchName}`;
 
   const statusReport = getStatusReport(data);
@@ -151,9 +125,7 @@ function getRepoReport(repoName, branchName, data) {
 function getStatusReport({ status }) {
   const statuses = keepLatestStatus(status);
   let okStatus = 0;
-  for (const stat of Object.values(statuses)) {
-    const { state, context } = stat;
-
+  for (const { state } of Object.values(statuses)) {
     if (state === 'success') {
       okStatus++;
     }
@@ -203,12 +175,3 @@ function getReviewsStatus({ reviews }) {
   const message = report.join(',');
   return { message, mergeable };
 }
-/*
-async function test() {
-  const branch = "chore/freeze-requires-163656563";
-  const result = await exports.getBranchInformation(branch);
-  console.log(result);
-}
-
-test();
-*/

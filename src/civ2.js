@@ -39,6 +39,7 @@ module.exports = function(robot) {
         const tagTxt = tag ? `tag ${tag}` : 'default tag';
         msg.reply(`The deployment of ${tagTxt} to ${target.trigger} is scheduled.`);
       } catch (ex) {
+        console.error(ex);
         msg.reply(`Sorry, something went wrong: ${ex.message}`);
       }
     });
@@ -49,7 +50,7 @@ module.exports = function(robot) {
       await civ2.release(tag, true);
       msg.reply('Release in progress.');
     } catch (ex) {
-      msg.reply(`Sorry, something went wrong: ${err.message}`);
+      respondToError(ex, msg);
     }
   });
 
@@ -59,7 +60,7 @@ module.exports = function(robot) {
       await civ2.release(tag, false);
       msg.reply('Rollback in progress.');
     } catch (ex) {
-      msg.reply(`Sorry, something went wrong: ${err.message}`);
+      respondToError(ex, msg);
     }
   });
 
@@ -68,7 +69,7 @@ module.exports = function(robot) {
       await civ2.updateBot();
       msg.reply("I'm now refreshing myself, master.");
     } catch (ex) {
-      msg.reply(`Sorry, something went wrong: ${err.message}`);
+      respondToError(ex, msg);
     }
   });
 
@@ -86,7 +87,7 @@ module.exports = function(robot) {
       const message = `Hum, something unexpected happened. You'd better <https://github.com/sutoiku/${repo}/branches|check on github>.`;
       return msg.send(message);
     } catch (ex) {
-      msg.send(`An error occured (${ex.message}).`);
+      replyError(ex, msg);
     }
   });
 
@@ -96,7 +97,7 @@ module.exports = function(robot) {
       await civ2.createFeatureCluster(branch);
       msg.reply('Creation in progress.');
     } catch (ex) {
-      msg.reply(`Sorry, something went wrong: ${err.message}`);
+      replyError(ex, msg);
     }
   });
 
@@ -106,7 +107,7 @@ module.exports = function(robot) {
       await civ2.destroyFeatureCluster(branch);
       msg.reply('Destruction in progress.');
     } catch (ex) {
-      msg.reply(`Sorry, something went wrong: ${ex.message}`);
+      replyError(ex, msg);
     }
   });
 
@@ -143,7 +144,7 @@ module.exports = function(robot) {
       return console.log(msg);
     }
 
-    console.log("It's a PR merge !", repo, branch);
+    console.log("Merged PR", repo, branch);
 
     try {
       await civ2.deleteBranch(repo, branch);
@@ -155,3 +156,13 @@ module.exports = function(robot) {
     }
   });
 };
+
+function respondToError(ex, msg) {
+  console.error(ex);
+  msg.reply(`Sorry, something went wrong: ${ex.message}`);
+}
+
+function replyError(ex, msg) {
+  console.error(ex);
+  msg.send(`An error occured (${ex.message}).`);
+}
