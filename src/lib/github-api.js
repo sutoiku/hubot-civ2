@@ -166,7 +166,7 @@ async function getPrTextWithPivotal(branchName, message) {
 
   const pt = await pivotalTracker.getStory(ptId);
   const description = `${message}\n\n# Description\n${pt.description}`;
-  return { description, name };
+  return { description, name: pt.name };
 }
 
 function getPTLink(branchName) {
@@ -195,7 +195,7 @@ function requestOnRepo(repo, method, pathname) {
 
 function initializePivotalTracker() {
   const { PIVOTAL_TRACKER_TOKEN, PIVOTAL_TRACKER_PROJECT } = process.env;
-  if (!PIVOTAL_TRACKER_PROJECT || !PIVOTAL_TRACKER_PROJECT) {
+  if (!PIVOTAL_TRACKER_PROJECT || !PIVOTAL_TRACKER_TOKEN) {
     return;
   }
 
