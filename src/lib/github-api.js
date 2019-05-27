@@ -165,7 +165,9 @@ async function getPrTextWithPivotal(branchName, message) {
   }
 
   const pt = await pivotalTracker.getStory(ptId);
-  const description = `${message}\n\n# Description\n${pt.description}`;
+  const ptLink = getPTLink(branchName);
+
+  const description = `${message}\n\n# PT\n\n${ptLink}\n\n# Description\n\n${pt.description}`;
   return { description, name: pt.name };
 }
 
