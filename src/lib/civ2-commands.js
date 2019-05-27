@@ -12,8 +12,18 @@ exports.deployV1 = function(tag) {
 exports.deployDocker = function(tag) {
   return buildJob('Release/marcus-to-docker-cloud', tag);
 };
+
 exports.deployK8s = function(tag) {
   return buildJob('Release/marcus-to-kubernetes', tag);
+};
+
+exports.updateInstance = async function(domain, env, requestedVersion) {
+  const version = requestedVersion || (await getLatestVersion());
+  const instanceName = 'k8s-' + domain;
+  const namespace = domain.replace(/\./g, '-');
+  const release = getHelmReleaseName(domain);
+  await buildJob('Release/marcus-to-kubernetes', undefined, { namespace, instanceName, env, version, release });
+  return version;
 };
 
 exports.release = function(tag, UpdatePivotalAndGitHub) {
@@ -155,6 +165,23 @@ function getPRStatus({ pr }) {
     return `<${html_url}|PR #${number} (${state})>`;
   }
   return 'no PR';
+}
+
+async function getLatestVersion() {
+  const url = `https://latest.stoic.cc/health`;
+  const healthBody = await rp(url);
+  const { version } = JSON.parse(healthBody);
+  return version;
+}
+
+function getHelmReleaseName(domain) {
+  const [subdomain] = domain.split('.');
+
+  if (subdomain === 'demo' || subdomain === 'dev') {
+    return 'stoic';
+  }
+
+  return 'stoic-' + subdomain;
 }
 
 function getReviewsStatus({ reviews }) {
