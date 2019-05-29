@@ -177,11 +177,7 @@ async function getLatestVersion() {
 function getHelmReleaseName(domain) {
   const [subdomain] = domain.split('.');
 
-  if (subdomain === 'demo' || subdomain === 'dev') {
-    return 'stoic';
-  }
-
-  return 'stoic-' + subdomain;
+  return subdomain === 'demo' || subdomain === 'dev' ? 'stoic' : 'stoic-' + subdomain;
 }
 
 function getReviewsStatus({ reviews }) {
