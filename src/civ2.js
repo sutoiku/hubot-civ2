@@ -9,6 +9,8 @@
 //   deploy to dockercloud <optional tag> - deploys the specified image:tag to docker. (default tag : release-candidate)
 //   deploy to kubernetes <optional tag> - deploys the specified image:tag to kubernetes dev cluster. (default tag : release-candidate)
 //   release stoic <version> - releases <version> in the wild.
+//   update instance <instance domain> on <env> environment
+//   update instance <instance domain> on <env> environment to version <version>
 //   rollback stoic <version> - rollback to stoic <version>
 //   archive <repository> <branch>
 //   create feature instance <branch> - Creates a cluster on the specified branch
@@ -44,6 +46,7 @@ module.exports = function(robot) {
       }
     });
   }
+
   robot.hear(/release stoic (\S*)/, async (msg) => {
     const tag = msg.match[1];
     try {
@@ -125,6 +128,16 @@ module.exports = function(robot) {
     const message = await civ2.createPRs(branchName, msg.message.user.name);
     const status = await civ2.getBranchInformation(branchName);
     msg.reply(`${message}\n${status}`);
+  });
+
+  robot.hear(/update instance (\S*)( on (\S*) environment)?( to version (\S*))?/, async (msg) => {
+    const [, instance, , env, , version] = msg.match;
+    try {
+      const targetVersion = await civ2.updateInstance(instance, env, version);
+      msg.reply(`Instance <${instance}|${instance}> is updating to version "${targetVersion}"`);
+    } catch (err) {
+      respondToError(err, msg);
+    }
   });
 
   robot.router.post('/hubot/civ2/github-webhook', async (req, res) => {
