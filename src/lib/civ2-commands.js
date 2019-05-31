@@ -17,12 +17,14 @@ exports.deployK8s = function(tag) {
   return buildJob('Release/marcus-to-kubernetes', tag);
 };
 
-exports.updateInstance = async function(domain, env, requestedVersion) {
+exports.updateInstance = async function(receivedDomain, env, requestedVersion) {
+  const domain = stripHttp(receivedDomain);
   const version = requestedVersion || (await getLatestVersion());
   const instanceName = 'k8s-' + domain;
   const namespace = domain.replace(/\./g, '-');
   const release = getHelmReleaseName(domain);
-  await buildJob('Release/marcus-to-kubernetes', undefined, { namespace, instanceName, env, version, release });
+
+  await buildJob('Release/marcus-to-kubernetes', undefined, { namespace, instanceName, env, version, release, domain });
   return version;
 };
 
@@ -197,4 +199,11 @@ function getReviewsStatus({ reviews }) {
   const mergeable = !!statuses.APPROVED && Object.keys(statuses).length == 1;
   const message = report.join(',');
   return { message, mergeable };
+}
+
+function stripHttp(domain) {
+  if (!domain.startsWith('http')) {
+    return domain;
+  }
+  return domain.substr(domain.indexOf('//') + 2);
 }
