@@ -11,7 +11,8 @@ const REPOS = [
   'grid',
   'core.stoic',
   'marcus',
-  'pictura'
+  'pictura',
+  'stoic-io'
 ];
 
 const PivotalTracker = require('./pivotal-tracker');
