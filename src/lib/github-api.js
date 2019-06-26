@@ -92,7 +92,7 @@ async function createMissingPrs(branchName, userName) {
         owner: GITHUB_ORG_NAME,
         repo: branchName,
         issue_numner: newPr.data.number,
-        assignees: [assignee]
+        assignees
       });
     } catch (err) {
       console.error('Error while updating : ', err);
@@ -105,7 +105,7 @@ async function getAllReposBranchInformation(branchName) {
   const allBranches = {};
   for (const repoName of REPOS) {
     const repo = gh.getRepo(GITHUB_ORG_NAME, repoName);
-    const repoData = await repoHasBranch(repo, branchName);
+    const repoData = await repoHasBranch(repo, repoName, branchName);
     if (repoData === null) {
       continue;
     }
@@ -114,11 +114,11 @@ async function getAllReposBranchInformation(branchName) {
   return allBranches;
 }
 
-async function repoHasBranch(repo, branchName) {
+async function repoHasBranch(repo, repoName, branchName) {
   try {
     const { data: branch } = await repo.getBranch(branchName);
     const { data: status } = await repo.listStatuses(branchName);
-    const pr = await getBranchPr(repo, branchName);
+    const pr = await getBranchPr(repoName, branchName);
     const reviews = await getReviews(repo, pr);
 
     return {
@@ -135,8 +135,8 @@ async function repoHasBranch(repo, branchName) {
   }
 }
 
-async function getBranchPr(repo, branchName) {
-  const prs = await repo.listPullRequests();
+async function getBranchPr(repoName, branchName) {
+  const prs = await octokit.pulls.list({ owner: GITHUB_ORG_NAME, repo: repoName});
   for (const pr of prs.data) {
     if (pr.head.ref === branchName) {
       return pr;
