@@ -23,6 +23,9 @@ const GitHub = require('github-api');
 const gh = new GitHub({
   token: GITHUB_TOKEN
 });
+const Octokit = require('@octokit/rest');
+const octokit = Octokit({ auth: GITHUB_TOKEN, previews: ['shadow-cat'] });
+
 const helpers = require('./helpers');
 const pivotalTracker = initializePivotalTracker();
 
@@ -62,17 +65,18 @@ async function createMissingPrs(branchName, userName) {
   const prText = await getPrText(branchName, userName, Object.keys(branchInformation));
 
   const user = helpers.getUserFromSlackLogin(userName);
-  console.log('USER', userName, user);
   const assignees = user && [user.githubLogin];
-  console.log('ASSIGNEES', assignees);
 
   const created = {};
   for (const repoName of prsToCreate) {
     const prSpec = {
+      owner: GITHUB_ORG_NAME,
+      repo: repoName,
       title: branchName,
       head: branchName,
       base: 'master',
-      body: prText.description
+      body: prText.description,
+      draft: true
     };
 
     if (prText.name) {
@@ -80,14 +84,18 @@ async function createMissingPrs(branchName, userName) {
     }
 
     const { repo } = branchInformation[repoName];
-    created[repoName] = await repo.createPullRequest(prSpec);
+    const newPr = await octokit.pulls.create(prSpec);
+    created[repoName] = newPr.data;
 
     try {
-      //set assignee is done via issues API
-      await repo.editIssue(created[repoName].number, { assignees });
-    } catch (ex) {
-      console.error('ERROR while assigning', ex);
-      console.log(repo);
+      await octokit.issues.update({
+        owner: GITHUB_ORG_NAME,
+        repo: branchName,
+        issue_numner: newPr.data.number,
+        assignees: [assignee]
+      });
+    } catch (err) {
+      console.error('Error while updating : ', err);
     }
   }
   return created;
