@@ -91,7 +91,7 @@ async function createMissingPrs(branchName, userName) {
       await octokit.issues.update({
         owner: GITHUB_ORG_NAME,
         repo: branchName,
-        issue_numner: newPr.data.number,
+        issue_number: newPr.data.number,
         assignees
       });
     } catch (err) {
