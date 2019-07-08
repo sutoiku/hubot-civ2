@@ -161,7 +161,7 @@ module.exports = function(robot) {
 
     try {
       await civ2.deleteBranch(repo, branch);
-      const message = `<https://github/com/sutoiku/${repo}/branches|Branch ${branch}> of <https://github/com/sutoiku/${repo}|${repo}> was merged, I deleted it.`;
+      const message = `<https://github/com/sutoiku/${repo}/branches|Branch ${branch}> of <https://github/com/sutoiku/${repo}|${repo}> was merged into ${base}, I deleted it.`;
       return robot.messageRoom(room, message);
     } catch (ex) {
       robot.messageRoom(room, `An error occured (${ex.message}).`);
