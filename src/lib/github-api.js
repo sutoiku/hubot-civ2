@@ -36,13 +36,6 @@ module.exports = {
   deleteBranch
 };
 
-async function mergePrs(branchName) {
-  const branchInformation = await getAllReposBranchInformation(branchName);
-  //check if possible
-
-  //merge
-}
-
 function findMissingPrs(branchInformation) {
   const prsToCreate = [];
   for (const [repoName, data] of Object.entries(branchInformation)) {
