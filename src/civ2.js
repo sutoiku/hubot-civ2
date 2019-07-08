@@ -16,7 +16,8 @@
 //   create feature instance <branch> - Creates a cluster on the specified branch
 //   destroy feature instance <branch> - Destroys the cluster of the specified branch
 //   branch status <branch name> - Displays information on branch and PRs
-//   create pull requests <branch name> - Create PRs on repos with the specified branch
+//   create pull requests <branch name> - Create PRs to master on repos with the specified branch
+//   create pull requests <branch name> to <base> - Create PRs to <base> on repos with the specified branch
 //
 // Notes:
 //   <optional notes required for the script>
