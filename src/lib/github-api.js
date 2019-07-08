@@ -54,7 +54,7 @@ function findMissingPrs(branchInformation) {
   return prsToCreate;
 }
 
-async function createMissingPrs(branchName, userName) {
+async function createMissingPrs(branchName, userName, targetBase = 'master') {
   const branchInformation = await getAllReposBranchInformation(branchName);
   const prsToCreate = findMissingPrs(branchInformation);
 
@@ -74,7 +74,7 @@ async function createMissingPrs(branchName, userName) {
       repo: repoName,
       title: branchName,
       head: branchName,
-      base: 'master',
+      base: targetBase,
       body: prText.description,
       draft: true
     };

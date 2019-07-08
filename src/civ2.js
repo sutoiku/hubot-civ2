@@ -121,11 +121,12 @@ module.exports = function(robot) {
     msg.reply(message);
   });
 
-  robot.hear(/create pull requests (\S*)/, async (msg) => {
+  robot.hear(/create pull requests (\S*)( to (\S*))?/, async (msg) => {
     const branchName = msg.match[1];
+    const target = msg.match.length > 3 ? msg.match[3] : 'master';
     msg.reply(`Creating PRs for branch ${branchName}...`);
     //TODO assign the PR to creator ?
-    const message = await civ2.createPRs(branchName, msg.message.user.name);
+    const message = await civ2.createPRs(branchName, msg.message.user.name, target);
     const status = await civ2.getBranchInformation(branchName);
     msg.reply(`${message}\n${status}`);
   });
