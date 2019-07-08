@@ -151,8 +151,8 @@ module.exports = function(robot) {
 
     const { repo, branch, id, base } = prMerge;
 
-    if (base !== 'master') {
-      const msg = `The PR ${repo}#${id} was not forked from master. Won't delete ${branch}.`;
+    if (base !== 'master' && base !== 'staging') {
+      const msg = `The PR ${repo}#${id} was not forked from master or staging. Won't delete ${branch}.`;
       robot.messageRoom(room, msg);
       return console.log(msg);
     }
