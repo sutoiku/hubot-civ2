@@ -26,6 +26,7 @@
 //   Yan[@sutoiku.com>]
 const civ2 = require('./lib/civ2-commands');
 const gh = require('./lib/github');
+const aws = require('./lib/aws');
 
 module.exports = function(robot) {
   const targets = [
@@ -122,6 +123,30 @@ module.exports = function(robot) {
     msg.reply(message);
   });
 
+  robot.hear(/my github token is (\S*)/, async (msg) => {
+    const user = msg.message.user.name;
+    const key = msg.match[1];
+
+    try {
+      await aws.storeUserKey(user, key, 'github');
+      msg.reply('Thanks. I will keep is safe.');
+    } catch (err) {
+      respondToError(err, msg);
+    }
+  });
+
+  robot.hear(/what is my github token \?/, async (msg) => {
+    const user = msg.message.user.name;
+
+    try {
+      const key = await aws.getUserKey(user, 'github');
+      const snippet = key.substring(0, 2);
+      msg.reply(`It starts with "${snippet}" but I won't divulgate more.`);
+    } catch (err) {
+      respondToError(err, msg);
+    }
+  });
+
   robot.hear(/create pull requests (\S*)( to (\S*))?/, async (msg) => {
     const branchName = msg.match[1];
     const target = msg.match.length > 3 ? msg.match[3] : 'master';
@@ -159,7 +184,7 @@ module.exports = function(robot) {
       return console.log(msg);
     }
 
-    console.log("Merged PR", repo, branch);
+    console.log('Merged PR', repo, branch);
 
     try {
       await civ2.deleteBranch(repo, branch);

@@ -24,10 +24,10 @@ const gh = new GitHub({
   token: GITHUB_TOKEN
 });
 const Octokit = require('@octokit/rest');
-const octokit = Octokit({ auth: GITHUB_TOKEN, previews: ['shadow-cat'] });
 
 const helpers = require('./helpers');
 const pivotalTracker = initializePivotalTracker();
+const aws = require('./aws');
 
 module.exports = {
   getAllReposBranchInformation,
@@ -48,6 +48,10 @@ function findMissingPrs(branchInformation) {
 }
 
 async function createMissingPrs(branchName, userName, targetBase = 'master') {
+  //const key = await aws.getUserKey(userName, 'github');
+  //const octokit = Octokit({ auth: key || GITHUB_TOKEN, previews: ['shadow-cat'] });
+  const octokit = Octokit({ auth: GITHUB_TOKEN, previews: ['shadow-cat'] });
+
   const branchInformation = await getAllReposBranchInformation(branchName);
   const prsToCreate = findMissingPrs(branchInformation);
 
@@ -129,7 +133,7 @@ async function repoHasBranch(repo, repoName, branchName) {
 }
 
 async function getBranchPr(repoName, branchName) {
-  const prs = await octokit.pulls.list({ owner: GITHUB_ORG_NAME, repo: repoName});
+  const prs = await octokit.pulls.list({ owner: GITHUB_ORG_NAME, repo: repoName });
   for (const pr of prs.data) {
     if (pr.head.ref === branchName) {
       return pr;

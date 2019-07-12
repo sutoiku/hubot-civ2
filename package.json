@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@octokit/rest": "^16.28.2",
+    "aws-sdk": "^2.492.0",
     "coffee-script": "~1.12",
     "debug": "^3.2.6",
     "github-api": "^3.2.0",
