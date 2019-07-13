@@ -48,9 +48,7 @@ function findMissingPrs(branchInformation) {
 }
 
 async function createMissingPrs(branchName, userName, targetBase = 'master') {
-  //const key = await aws.getUserKey(userName, 'github');
-  //const octokit = Octokit({ auth: key || GITHUB_TOKEN, previews: ['shadow-cat'] });
-  const octokit = Octokit({ auth: GITHUB_TOKEN, previews: ['shadow-cat'] });
+  const octokit = await getOctokit();
 
   const branchInformation = await getAllReposBranchInformation(branchName);
   const prsToCreate = findMissingPrs(branchInformation);
@@ -83,17 +81,6 @@ async function createMissingPrs(branchName, userName, targetBase = 'master') {
     const { repo } = branchInformation[repoName];
     const newPr = await octokit.pulls.create(prSpec);
     created[repoName] = newPr.data;
-
-    try {
-      await octokit.issues.update({
-        owner: GITHUB_ORG_NAME,
-        repo: branchName,
-        issue_number: newPr.data.number,
-        assignees
-      });
-    } catch (err) {
-      console.error('Error while updating : ', err);
-    }
   }
   return created;
 }
@@ -133,6 +120,7 @@ async function repoHasBranch(repo, repoName, branchName) {
 }
 
 async function getBranchPr(repoName, branchName) {
+  const octokit = await getOctokit();
   const prs = await octokit.pulls.list({ owner: GITHUB_ORG_NAME, repo: repoName });
   for (const pr of prs.data) {
     if (pr.head.ref === branchName) {
@@ -208,4 +196,10 @@ function initializePivotalTracker() {
   }
 
   return new PivotalTracker(PIVOTAL_TRACKER_TOKEN, PIVOTAL_TRACKER_PROJECT);
+}
+
+async function getOctokit() {
+  //const key = await aws.getUserKey(userName, 'github');
+  //const octokit = Octokit({ auth: key || GITHUB_TOKEN, previews: ['shadow-cat'] });
+  return Octokit({ auth: GITHUB_TOKEN, previews: ['shadow-cat'] });
 }
