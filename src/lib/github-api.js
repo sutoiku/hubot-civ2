@@ -199,7 +199,7 @@ function initializePivotalTracker() {
 }
 
 async function getOctokit(userName) {
-  //const key = await aws.getUserKey(userName, 'github');
-  //const octokit = Octokit({ auth: key || GITHUB_TOKEN, previews: ['shadow-cat'] });
-  return Octokit({ auth: GITHUB_TOKEN, previews: ['shadow-cat'] });
+  const key = await aws.getUserKey(userName, 'github');
+  return Octokit({ auth: key || GITHUB_TOKEN, previews: ['shadow-cat'] });
+  //return Octokit({ auth: GITHUB_TOKEN, previews: ['shadow-cat'] });
 }
