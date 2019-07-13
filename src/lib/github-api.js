@@ -48,9 +48,9 @@ function findMissingPrs(branchInformation) {
 }
 
 async function createMissingPrs(branchName, userName, targetBase = 'master') {
-  const octokit = await getOctokit();
+  const octokit = await getOctokit(userName);
 
-  const branchInformation = await getAllReposBranchInformation(branchName);
+  const branchInformation = await getAllReposBranchInformation(branchName, userName);
   const prsToCreate = findMissingPrs(branchInformation);
 
   if (prsToCreate.length === 0) {
@@ -85,11 +85,11 @@ async function createMissingPrs(branchName, userName, targetBase = 'master') {
   return created;
 }
 
-async function getAllReposBranchInformation(branchName) {
+async function getAllReposBranchInformation(branchName, userName) {
   const allBranches = {};
   for (const repoName of REPOS) {
     const repo = gh.getRepo(GITHUB_ORG_NAME, repoName);
-    const repoData = await repoHasBranch(repo, repoName, branchName);
+    const repoData = await repoHasBranch(repo, repoName, branchName, userName);
     if (repoData === null) {
       continue;
     }
@@ -98,11 +98,11 @@ async function getAllReposBranchInformation(branchName) {
   return allBranches;
 }
 
-async function repoHasBranch(repo, repoName, branchName) {
+async function repoHasBranch(repo, repoName, branchName, userName) {
   try {
     const { data: branch } = await repo.getBranch(branchName);
     const { data: status } = await repo.listStatuses(branchName);
-    const pr = await getBranchPr(repoName, branchName);
+    const pr = await getBranchPr(repoName, branchName, userName);
     const reviews = await getReviews(repo, pr);
 
     return {
@@ -119,8 +119,8 @@ async function repoHasBranch(repo, repoName, branchName) {
   }
 }
 
-async function getBranchPr(repoName, branchName) {
-  const octokit = await getOctokit();
+async function getBranchPr(repoName, branchName, userName) {
+  const octokit = await getOctokit(userName);
   const prs = await octokit.pulls.list({ owner: GITHUB_ORG_NAME, repo: repoName });
   for (const pr of prs.data) {
     if (pr.head.ref === branchName) {
@@ -198,7 +198,7 @@ function initializePivotalTracker() {
   return new PivotalTracker(PIVOTAL_TRACKER_TOKEN, PIVOTAL_TRACKER_PROJECT);
 }
 
-async function getOctokit() {
+async function getOctokit(userName) {
   //const key = await aws.getUserKey(userName, 'github');
   //const octokit = Octokit({ auth: key || GITHUB_TOKEN, previews: ['shadow-cat'] });
   return Octokit({ auth: GITHUB_TOKEN, previews: ['shadow-cat'] });

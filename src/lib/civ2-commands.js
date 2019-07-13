@@ -55,9 +55,9 @@ exports.destroyFeatureCluster = (FEATURE) => {
   return buildJob('Chore/feature-clusters/destroy', undefined, { FEATURE });
 };
 
-exports.getBranchInformation = async function(branchName) {
+exports.getBranchInformation = async function(branchName, userName) {
   try {
-    const status = await ghApi.getAllReposBranchInformation(branchName);
+    const status = await ghApi.getAllReposBranchInformation(branchName, userName);
     return formatBranchInformation(branchName, status);
   } catch (error) {
     console.error(error);
