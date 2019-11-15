@@ -42,9 +42,21 @@
     "email": "francois@stoic.com"
   },
   {
-    "slack": "simon",
-    "githubLogin": "simon-stoic",
-    "firstName": "Simon",
-    "email": "simon@stoic.com"
+    "slack": "dylan",
+    "githubLogin": "littork",
+    "firstName": "Dylan",
+    "email": "dylan@stoic.com"
+  },
+  {
+    "slack": "pierre",
+    "githubLogin": "p-lebouc",
+    "firstName": "Pierre",
+    "email": "pierre@stoic.com"
+  },
+  {
+    "slack": "Tristan",
+    "githubLogin": "TristanLrx",
+    "firstName": "Tristan",
+    "email": "tristan@stoic.com"
   }
 ]
