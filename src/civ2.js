@@ -29,6 +29,8 @@ const gh = require('./lib/github');
 const aws = require('./lib/aws');
 const crypto = require('crypto');
 
+const SHARED_SIGNATURE = 'a]DzwfrtvHg4mxxgCjZQJGCXvH';
+
 module.exports = function(robot) {
   const targets = [
     { trigger: 'civ1', method: civ2.deployV1 },
@@ -233,10 +235,10 @@ module.exports = function(robot) {
 };
 
 function checkSignature(branchName, signature) {
-  const str = branchName + '|' + process.env.GITHUB_TOKEN;
+  const str = branchName + '|' + SHARED_SIGNATURE;
   const shasum = crypto.createHash('sha1');
   shasum.update(str);
-  const hash = shasum.digest('utf-8');
+  const hash = shasum.digest('hex');
 
   console.log(`Comparing hashes for "${branchName}": expected "${hash}", received "${signature}"`);
 
