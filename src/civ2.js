@@ -207,14 +207,16 @@ module.exports = function(robot) {
   });
 
   robot.router.post('/hubot/civ2/create-pr', async (req, res) => {
-    if (req.body.payload === null) {
+    if (!req.body) {
       console.log('No payload in create-pr request');
       return res.statusCode(400).send('Payload is mandatory');
     }
 
-    const { branchName, author = 'magic', sign, target = 'master' } = JSON.parse(req.body.payload);
+    console.log('Received payload:' + req.body);
+
+    const { branchName, author = 'magic', sign, target = 'master' } = req.body;
     if (!branchName || !sign) {
-      console.log('Incomplete payload in create pr request: ' + req.body.payload);
+      console.log('Incomplete payload in create pr request: ' + req.body);
       return res.statusCode(400).send('BranchName and Signature are mandatory');
     }
 
