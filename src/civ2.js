@@ -192,7 +192,7 @@ module.exports = function(robot) {
       robot.messageRoom(room, message);
     } catch (ex) {
       robot.messageRoom(room, `An error occured while deleting branch "${branch}" (${ex.message}).`);
-      res.statusCode(500).send('Error');
+      res.status(500).send('Error');
     }
 
     try {
@@ -202,33 +202,33 @@ module.exports = function(robot) {
         room,
         `An error occured while triggering destruction of feature cluster "${branch}" (${ex.message}).`
       );
-      res.statusCode(500).send('Error');
+      res.status(500).send('Error');
     }
   });
 
   robot.router.post('/hubot/civ2/create-pr', async (req, res) => {
     if (!req.body) {
       console.log('No payload in create-pr request');
-      return res.statusCode(400).send('Payload is mandatory');
+      return res.status(400).send('Payload is mandatory');
     }
 
     console.log('Received payload:' + req.body);
 
-    const { branchName, author = 'magic', sign, target = 'master' } = req.body;
-    if (!branchName || !sign) {
+    const { branch, author = 'magic', sign, target = 'master' } = req.body;
+    if (!branch || !sign) {
       console.log('Incomplete payload in create pr request: ' + req.body);
-      return res.statusCode(400).send('BranchName and Signature are mandatory');
+      return res.status(400).send('BranchName and Signature are mandatory');
     }
 
-    if (!checkSignature(branchName, sign)) {
+    if (!checkSignature(branch, sign)) {
       console.log('Incorrect signature');
-      return res.statusCode(400).send('Incorrect signature.');
+      return res.status(400).send('Incorrect signature.');
     }
 
-    console.log(`Request OK, would create PRs on branch "${branchName}", author "${author}", target "${target}"`);
+    console.log(`Request OK, would create PRs on branch "${branch}", author "${author}", target "${target}"`);
 
-    // const message = await civ2.createPRs(branchName, author, target);
-    // return res.statusCode(200).send(message);
+    // const message = await civ2.createPRs(branch, author, target);
+    // return res.status(200).send(message);
   });
 };
 
