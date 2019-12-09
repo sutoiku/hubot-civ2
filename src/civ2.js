@@ -236,7 +236,9 @@ function checkSignature(branchName, signature) {
   const str = branchName + '|' + process.env.GITHUB_TOKEN;
   const shasum = crypto.createHash('sha1');
   shasum.update(str);
-  const hash = shasum.digest('hex');
+  const hash = shasum.digest('utf-8');
+
+  console.log(`Comparing hashes for "${branchName}": expected "${hash}", received "${signature}"`);
 
   return hash === signature;
 }
