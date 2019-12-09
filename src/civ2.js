@@ -27,6 +27,7 @@
 const civ2 = require('./lib/civ2-commands');
 const gh = require('./lib/github');
 const aws = require('./lib/aws');
+const crypto = require('crypto');
 
 module.exports = function(robot) {
   const targets = [
@@ -188,13 +189,50 @@ module.exports = function(robot) {
     try {
       await civ2.deleteBranch(repo, branch);
       const message = `<https://github/com/sutoiku/${repo}/branches|Branch ${branch}> of <https://github/com/sutoiku/${repo}|${repo}> was merged into ${base}, I deleted it.`;
-      return robot.messageRoom(room, message);
+      robot.messageRoom(room, message);
     } catch (ex) {
-      robot.messageRoom(room, `An error occured (${ex.message}).`);
-      return res.statusCode(500).send('Error');
+      robot.messageRoom(room, `An error occured while deleting branch "${branch}" (${ex.message}).`);
+      res.statusCode(500).send('Error');
+    }
+
+    try {
+      await civ2.destroyFeatureCluster(branch);
+    } catch (ex) {
+      robot.messageRoom(
+        room,
+        `An error occured while triggering destruction of feature cluster "${branch}" (${ex.message}).`
+      );
+      res.statusCode(500).send('Error');
     }
   });
+
+  robot.router.post('/hubot/civ2/create-pr', async (req, res) => {
+    if (req.body.payload === null) {
+      return res.statusCode(400).send('Payload is mandatory');
+    }
+
+    const { branchName, author = 'magic', sign, target = 'master' } = JSON.parse(req.body.payload);
+    if (!branchName || !sign) {
+      return res.statusCode(400).send('BranchName and Signature are mandatory');
+    }
+
+    if (!checkSignature(branchName, sign)) {
+      return res.statusCode(400).send('Incorrect signature.');
+    }
+
+    const message = await civ2.createPRs(branchName, author, target);
+    return res.statusCode(200).send(message);
+  });
 };
+
+function checkSignature(branchName, signature) {
+  const str = branchName + '|' + process.env.GITHUB_TOKEN;
+  const shasum = crypto.createHash('sha1');
+  shasum.update(str);
+  const hash = shasum.digest('hex');
+
+  return hash === signature;
+}
 
 function respondToError(ex, msg) {
   console.error(ex);
