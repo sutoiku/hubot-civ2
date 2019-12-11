@@ -65,9 +65,9 @@ exports.getBranchInformation = async function(branchName, userName) {
   }
 };
 
-exports.createPRs = async function(branchName, userName, targetBase) {
+exports.createPRs = async function(branchName, userName, targetBase, options) {
   try {
-    const created = await ghApi.createMissingPrs(branchName, userName, targetBase);
+    const created = await ghApi.createMissingPrs(branchName, userName, targetBase, options);
     //console.log(created);
 
     const strCreated = Object.keys(created)

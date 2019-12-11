@@ -48,7 +48,7 @@ function findMissingPrs(branchInformation) {
   return prsToCreate;
 }
 
-async function createMissingPrs(branchName, userName, targetBase = 'master') {
+async function createMissingPrs(branchName, userName, targetBase = 'master', options = {}) {
   const octokit = await getOctokit(userName);
 
   const branchInformation = await getAllReposBranchInformation(branchName, userName);
@@ -65,15 +65,14 @@ async function createMissingPrs(branchName, userName, targetBase = 'master') {
 
   const created = {};
   for (const repoName of prsToCreate) {
-    const prSpec = {
+    const prSpec = Object.assign(options, {
       owner: GITHUB_ORG_NAME,
       repo: repoName,
       title: branchName,
       head: branchName,
       base: targetBase,
-      body: prText.description,
-      draft: true
-    };
+      body: prText.description
+    });
 
     if (prText.name) {
       prSpec.title = prText.name;

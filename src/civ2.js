@@ -154,7 +154,7 @@ module.exports = function(robot) {
     const branchName = msg.match[1];
     const target = msg.match.length > 3 ? msg.match[3] : 'master';
     msg.reply(`Creating PRs for branch ${branchName}...`);
-    const message = await civ2.createPRs(branchName, msg.message.user.name, target);
+    const message = await civ2.createPRs(branchName, msg.message.user.name, target, { draft: true });
     const status = await civ2.getBranchInformation(branchName, msg.message.user.name);
     msg.reply(`${message}\n${status}`);
   });
@@ -216,7 +216,7 @@ module.exports = function(robot) {
 
     console.log('Received payload:' + req.body);
 
-    const { branch, author = 'magic', sign, target = 'master', dryrun } = req.body;
+    const { branch, author = 'magic', sign, target = 'master', dryrun, draft = true } = req.body;
     if (!branch || !sign) {
       console.log('Incomplete payload in create pr request: ' + req.body);
       return res.status(400).send('BranchName and Signature are mandatory');
@@ -229,7 +229,7 @@ module.exports = function(robot) {
 
     const message = dryrun
       ? `Request OK, would create PRs on branch "${branch}", author "${author}", target "${target}"`
-      : await civ2.createPRs(branch, author, target);
+      : await civ2.createPRs(branch, author, target, { draft });
     res.send(message);
     console.log(message);
   });
