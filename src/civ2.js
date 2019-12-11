@@ -216,7 +216,7 @@ module.exports = function(robot) {
 
     console.log('Received payload:' + req.body);
 
-    const { branch, author = 'magic', sign, target = 'master' } = req.body;
+    const { branch, author = 'magic', sign, target = 'master', dryrun } = req.body;
     if (!branch || !sign) {
       console.log('Incomplete payload in create pr request: ' + req.body);
       return res.status(400).send('BranchName and Signature are mandatory');
@@ -227,10 +227,11 @@ module.exports = function(robot) {
       return res.status(400).send('Incorrect signature.');
     }
 
-    console.log(`Request OK, would create PRs on branch "${branch}", author "${author}", target "${target}"`);
-
-    // const message = await civ2.createPRs(branch, author, target);
-    // return res.status(200).send(message);
+    const message = dryrun
+      ? `Request OK, would create PRs on branch "${branch}", author "${author}", target "${target}"`
+      : await civ2.createPRs(branch, author, target);
+    res.send(message);
+    console.log(message);
   });
 };
 
