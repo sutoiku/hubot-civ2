@@ -21,21 +21,14 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GITHUB_ORG_NAME = 'sutoiku';
 
 const GitHub = require('github-api');
-const gh = new GitHub({
-  token: GITHUB_TOKEN
-});
+const gh = new GitHub({ token: GITHUB_TOKEN });
 const Octokit = require('@octokit/rest');
 
 const helpers = require('./helpers');
 const pivotalTracker = initializePivotalTracker();
 const aws = require('./aws');
 
-module.exports = {
-  getAllReposBranchInformation,
-  getPTLink,
-  createMissingPrs,
-  deleteBranch
-};
+module.exports = { getAllReposBranchInformation, getPTLink, createMissingPrs, deleteBranch };
 
 function findMissingPrs(branchInformation) {
   const prsToCreate = [];
@@ -60,29 +53,34 @@ async function createMissingPrs(branchName, userName, targetBase = 'master', opt
 
   const prText = await getPrText(branchName, userName, Object.keys(branchInformation));
 
-  const user = helpers.getUserFromSlackLogin(userName);
-  const assignees = user && [user.githubLogin];
-
   const created = {};
   for (const repoName of prsToCreate) {
-    const prSpec = Object.assign(options, {
-      owner: GITHUB_ORG_NAME,
-      repo: repoName,
-      title: branchName,
-      head: branchName,
-      base: targetBase,
-      body: prText.description
-    });
-
-    if (prText.name) {
-      prSpec.title = prText.name;
-    }
-
-    const { repo } = branchInformation[repoName];
-    const newPr = await octokit.pulls.create(prSpec);
+    const newPr = await createPr(repoName, branchName, targetBase, prText, octokit, options);
     created[repoName] = newPr.data;
   }
+
   return created;
+}
+
+async function createPr(repoName, branchName, targetBase, prText, octokit, options) {
+  const prSpec = Object.assign(options, {
+    owner: GITHUB_ORG_NAME,
+    repo: repoName,
+    title: branchName,
+    head: branchName,
+    base: targetBase,
+    body: prText.description
+  });
+
+  if (prText.name) {
+    prSpec.title = prText.name;
+  }
+  try {
+    const { data } = await octokit.pulls.create(prSpec);
+    return data;
+  } catch (err) {
+    return { error: err };
+  }
 }
 
 async function getAllReposBranchInformation(branchName, userName) {
@@ -158,11 +156,16 @@ async function getPrTextWithPivotal(branchName, message) {
     return { description: message };
   }
 
-  const pt = await pivotalTracker.getStory(ptId);
-  const ptLink = getPTLink(branchName);
+  try {
+    const pt = await pivotalTracker.getStory(ptId);
+    const ptLink = getPTLink(branchName);
 
-  const description = `${message}\n\n# PT\n\n${ptLink}\n\n# Description\n\n${pt.description}`;
-  return { description, name: pt.name };
+    const description = `${message}\n\n# PT\n\n${ptLink}\n\n# Description\n\n${pt.description}`;
+    return { description, name: pt.name };
+  } catch (err) {
+    console.error(`Error fetching PT #${ptId}: ${err.message}`);
+    return { description: message };
+  }
 }
 
 function getPTLink(branchName) {

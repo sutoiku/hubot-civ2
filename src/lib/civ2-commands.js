@@ -68,17 +68,31 @@ exports.getBranchInformation = async function(branchName, userName) {
 exports.createPRs = async function(branchName, userName, targetBase, options) {
   try {
     const created = await ghApi.createMissingPrs(branchName, userName, targetBase, options);
-    //console.log(created);
 
-    const strCreated = Object.keys(created)
-      .map((it) => '`' + it + '`')
-      .join(',');
-    return `Pull Request created on ${strCreated}`;
+    const strCreated = getPrlist(created, false);
+    const strError = getPrlist(created, true);
+    const message = [];
+    if (strCreated) {
+      message.push(`Pull Request created on ${strCreated}.`);
+    }
+
+    if (strError) {
+      message.push(`Error on ${strCreated}.`);
+    }
+
+    return message.join();
   } catch (error) {
     console.error(error);
     return `Error: ${error.message}`;
   }
 };
+
+function getPrlist(created, withError) {
+  return Object.keys(created)
+    .filter((it) => (withError ? !!created[it].error : !created[it].error))
+    .map((it) => '`' + it + '`')
+    .join(',');
+}
 
 function buildJob(name, tag, additionalParameters) {
   const baseUrl = getBaseUrl();
