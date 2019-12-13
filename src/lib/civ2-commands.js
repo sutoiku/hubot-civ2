@@ -197,13 +197,15 @@ function getHelmReleaseName(domain) {
 }
 
 function getReviewsStatus({ reviews }) {
-  const statuses = reviews.map((it) => it.state).reduce((acc, it) => {
-    if (!acc[it]) {
-      acc[it] = 0;
-    }
-    acc[it]++;
-    return acc;
-  }, {});
+  const statuses = reviews
+    .map((it) => it.state)
+    .reduce((acc, it) => {
+      if (!acc[it]) {
+        acc[it] = 0;
+      }
+      acc[it]++;
+      return acc;
+    }, {});
 
   const report = [];
   for (const [stat, count] of Object.entries(statuses)) {
