@@ -56,7 +56,7 @@ async function createMissingPrs(branchName, userName, targetBase = 'master', opt
   const created = {};
   for (const repoName of prsToCreate) {
     const newPr = await createPr(repoName, branchName, targetBase, prText, octokit, options);
-    created[repoName] = newPr.data;
+    created[repoName] = newPr;
   }
 
   return created;
