@@ -18,6 +18,9 @@
 //   branch status <branch name> - Displays information on branch and PRs
 //   create pull requests <branch name> - Create PRs to master on repos with the specified branch
 //   create pull requests <branch name> to <base> - Create PRs to <base> on repos with the specified branch
+//   merge pull requests <branch name> - Merge all PRs on the specified branch
+//   close pull requests <branch name> - Close all PRs on the specified branch
+//   delete branch <branch name> - Delete this branch on all repos. PRs must be closed first.
 //
 // Notes:
 //   <optional notes required for the script>
@@ -157,6 +160,54 @@ module.exports = function(robot) {
     const message = await civ2.createPRs(branchName, msg.message.user.name, target, { draft: true });
     const status = await civ2.getBranchInformation(branchName, msg.message.user.name);
     msg.reply(`${message}\n${status}`);
+  });
+
+  robot.hear(/merge pull requests (\S*)/, async (msg) => {
+    const branchName = msg.match[1];
+    msg.reply(`Merging PRs for branch ${branchName}...`);
+
+    try {
+      const message = await civ2.mergePRs(branchName, msg.message.user.name);
+      msg.reply(message);
+    } catch (err) {
+      respondToError(err, msg);
+    }
+  });
+
+  robot.hear(/close pull requests (\S*)/, async (msg) => {
+    const branchName = msg.match[1];
+    msg.reply(`Closing PRs for branch ${branchName}...`);
+
+    try {
+      const message = await civ2.closePRs(branchName, msg.message.user.name);
+      msg.reply(message);
+    } catch (err) {
+      respondToError(err, msg);
+    }
+  });
+
+  robot.hear(/delete branch (\S*)/, async (msg) => {
+    const branchName = msg.match[1];
+    msg.reply(`Deleting branch ${branchName}...`);
+
+    try {
+      const message = await civ2.deleteBranches(branchName, msg.message.user.name);
+      msg.reply(message);
+    } catch (err) {
+      respondToError(err, msg);
+    }
+  });
+
+  robot.hear(/update links (\S*)/, async (msg) => {
+    const branchName = msg.match[1];
+    msg.reply(`Updating lonks for branch ${branchName}...`);
+
+    try {
+      const message = await civ2.updatePRsDescriptions(branchName, msg.message.user.name);
+      msg.reply(message);
+    } catch (err) {
+      respondToError(err, msg);
+    }
   });
 
   robot.hear(/update instance (\S*)( on (\S*) environment)?( to version (\S*))?/, async (msg) => {

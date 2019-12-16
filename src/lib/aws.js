@@ -11,6 +11,10 @@ exports.storeUserKey = async function(user, key, kind) {
 };
 
 exports.getUserKey = async function(user, kind) {
+  if (!AWS_BOT_BUCKET || !AWS_KMS_KEY) {
+    return null;
+  }
+
   try {
     const { Body } = await s3.getObject({ Bucket: AWS_BOT_BUCKET, Key: user + '-' + kind }).promise();
     return decrypt(Body);

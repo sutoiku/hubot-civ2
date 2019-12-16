@@ -43,6 +43,12 @@ exports.archive = function(repo, branch) {
   return rp(url, { headers });
 };
 
+exports.deleteBranches = async function(branchName, userName) {
+  const deleted = await ghApi.deleteBranches(branchName, userName);
+  const deletedList = deleted.map((it) => '`' + it + '`').join(',');
+  return `Delete branches on ${deletedList}.`;
+};
+
 exports.deleteBranch = function(repo, branch) {
   return ghApi.deleteBranch(repo, branch);
 };
@@ -85,6 +91,22 @@ exports.createPRs = async function(branchName, userName, targetBase, options) {
     console.error(error);
     return `Error: ${error.message}`;
   }
+};
+
+exports.mergePRs = async function(branchName, userName) {
+  const merged = await ghApi.mergePRs(branchName, userName);
+  const mergedList = merged.map((it) => '`' + it + '`').join(',');
+  return `Merging PRs on ${mergedList}.`;
+};
+
+exports.closePRs = async function(branchName, userName) {
+  const closed = await ghApi.closePRs(branchName, userName);
+  const closedList = closed.map((it) => '`' + it + '`').join(',');
+  return `Closed PRs on ${closedList}.`;
+};
+
+exports.updatePRsDescriptions = async function(branchName, userName) {
+  return ghApi.updatePRsDescriptions(branchName, userName);
 };
 
 function getPrlist(created, withError) {

@@ -17,18 +17,27 @@ const REPOS = [
 ];
 
 const PivotalTracker = require('./pivotal-tracker');
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-const GITHUB_ORG_NAME = 'sutoiku';
-
 const GitHub = require('github-api');
+const { GITHUB_TOKEN } = process.env;
 const gh = new GitHub({ token: GITHUB_TOKEN });
 const Octokit = require('@octokit/rest');
-
 const helpers = require('./helpers');
-const pivotalTracker = initializePivotalTracker();
 const aws = require('./aws');
 
-module.exports = { getAllReposBranchInformation, getPTLink, createMissingPrs, deleteBranch };
+const pivotalTracker = initializePivotalTracker();
+const GITHUB_ORG_NAME = 'sutoiku';
+const REPOS_MARKER = '# REPOS';
+
+module.exports = {
+  getAllReposBranchInformation,
+  getPTLink,
+  createMissingPrs,
+  deleteBranch,
+  mergePRs,
+  closePRs,
+  updatePRsDescriptions,
+  deleteBranches
+};
 
 function findMissingPrs(branchInformation) {
   const prsToCreate = [];
@@ -59,7 +68,50 @@ async function createMissingPrs(branchName, userName, targetBase = 'master', opt
     created[repoName] = newPr;
   }
 
+  // asynchronously update descriptions with links after creation
+  updatePRsDescriptions(branchName, userName);
+
   return created;
+}
+
+async function mergePRs(branchName, userName) {
+  const octokit = await getOctokit(userName);
+  const repos = await getAllReposBranchInformation(branchName, userName);
+  const merged = [];
+
+  for (const [repo, { pr }] of Object.entries(repos)) {
+    if (!!pr) {
+      await octokit.pulls.merge({ owner: GITHUB_ORG_NAME, repo, pull_number: pr.number });
+      merged.push(repo);
+    }
+  }
+
+  return merged;
+}
+
+async function closePRs(branchName, userName) {
+  const octokit = await getOctokit(userName);
+  const repos = await getAllReposBranchInformation(branchName, userName);
+  const closed = [];
+
+  for (const [repo, { pr }] of Object.entries(repos)) {
+    if (!!pr) {
+      await octokit.pulls.update({ owner: GITHUB_ORG_NAME, repo, pull_number: pr.number, state: 'closed' });
+      closed.push(repo);
+    }
+  }
+
+  return closed;
+}
+
+async function updatePRsDescriptions(branchName, userName) {
+  const repos = await getAllReposBranchInformation(branchName);
+  const linkDescription = generateLinkDescription(repos);
+  const updated = replaceLinks(repos, linkDescription);
+  const octokit = await getOctokit(userName);
+  for (const [repo, { pr }] of Object.entries(updated)) {
+    await octokit.pulls.update({ owner: GITHUB_ORG_NAME, repo, pull_number: pr.number, body: pr.body });
+  }
 }
 
 async function createPr(repoName, branchName, targetBase, prText, octokit, options) {
@@ -101,14 +153,9 @@ async function repoHasBranch(repo, repoName, branchName, userName) {
     const { data: branch } = await repo.getBranch(branchName);
     const { data: status } = await repo.listStatuses(branchName);
     const pr = await getBranchPr(repoName, branchName, userName);
-    const reviews = await getReviews(repo, pr);
+    //const reviews = await getReviews(repo, pr);
 
-    return {
-      branch,
-      status,
-      pr,
-      reviews
-    };
+    return { branch, status, pr /*, reviews*/ };
   } catch (error) {
     if (error.message.startsWith('404')) {
       return null;
@@ -134,23 +181,34 @@ async function deleteBranch(repoName, branchName) {
   return requestOnRepo(repo, 'DELETE', pathname);
 }
 
+async function deleteBranches(branchName, userName) {
+  const deleted = [];
+  const repos = await getAllReposBranchInformation(branchName, userName);
+  for (const [repoName, repo] of Object.entries(repos)) {
+    await deleteBranch(repo, branchName);
+    deleted.push(repoName);
+  }
+
+  return deleted;
+}
+
 // HELPERS
 async function getPrText(branchName, userName, repos) {
   const strRepos = repos.map((it) => '`' + it + '`').join(',');
   const user = helpers.getUserFromSlackLogin(userName);
   const displayName = user ? user.firstName : userName;
-  const message = `This pull request has been created by ${displayName} via the bot.\n\n# REPOS\n${strRepos}`;
+  const message = `This pull request has been created by ${displayName} via the bot.`;
 
   if (!pivotalTracker) {
     const ptLink = getPTLink(branchName);
-    const description = `${message}\n\n# PT\n${ptLink}\n\n`;
+    const description = `${message}\n\n# PT\n${ptLink}\n\n${REPOS_MARKER}\n\n${strRepos}`;
     return { description };
   }
 
-  return getPrTextWithPivotal(branchName, message);
+  return getPrTextWithPivotal(branchName, message, strRepos);
 }
 
-async function getPrTextWithPivotal(branchName, message) {
+async function getPrTextWithPivotal(branchName, message, strRepos) {
   const ptId = getPtIdFromBranchName(branchName);
   if (!ptId) {
     return { description: message };
@@ -160,7 +218,9 @@ async function getPrTextWithPivotal(branchName, message) {
     const pt = await pivotalTracker.getStory(ptId);
     const ptLink = getPTLink(branchName);
 
-    const description = `${message}\n\n# PT\n\n${ptLink}\n\n# Description\n\n${pt.description}`;
+    const description = `${message}\n\n# PT\n\n${ptLink}\n\n# Description\n\n${
+      pt.description
+    }\n\n${REPOS_MARKER}\n\n${strRepos}`;
     return { description, name: pt.name };
   } catch (err) {
     console.error(`Error fetching PT #${ptId}: ${err.message}`);
@@ -204,5 +264,29 @@ function initializePivotalTracker() {
 async function getOctokit(userName) {
   const key = await aws.getUserKey(userName, 'github');
   return Octokit({ auth: key || GITHUB_TOKEN, previews: ['shadow-cat'] });
-  //return Octokit({ auth: GITHUB_TOKEN, previews: ['shadow-cat'] });
+}
+
+function generateLinkDescription(repos) {
+  const linkDdesc = [];
+  for (const [repoName, { pr }] of Object.entries(repos)) {
+    const jenkinsLink = `[![Build Status](https://ci-v2.stoic.com/buildStatus/icon?job=Modules%2F${repoName}%2FPR-${
+      pr.number
+    })](https://ci-v2.stoic.com/job/Modules/job/${repoName}/view/change-requests/job/PR-${pr.number}/)`;
+    linkDdesc.push(` * ${jenkinsLink} [${repoName} PR #${pr.number}](${pr.html_url})`);
+  }
+
+  return linkDdesc.join('\n');
+}
+
+function replaceLinks(repos, links) {
+  const replaced = {};
+  for (const [repoName, repo] of Object.entries(repos)) {
+    const replacedRepo = Object.assign({}, repo);
+    const idx = replacedRepo.pr.body.indexOf(REPOS_MARKER);
+    replacedRepo.pr.body =
+      replacedRepo.pr.body.substr(0, idx === -1 ? replacedRepo.pr.body.length : idx) + REPOS_MARKER + '\n\n' + links;
+    replaced[repoName] = replacedRepo;
+  }
+
+  return replaced;
 }
