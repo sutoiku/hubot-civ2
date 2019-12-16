@@ -293,7 +293,11 @@ function replaceLinks(repos, links) {
 
     const idx = replacedRepo.pr.body.indexOf(REPOS_MARKER);
     replacedRepo.pr.body =
-      replacedRepo.pr.body.substr(0, idx === -1 ? replacedRepo.pr.body.length : idx) + REPOS_MARKER + '\n\n' + links;
+      replacedRepo.pr.body.substr(0, idx === -1 ? replacedRepo.pr.body.length : idx) +
+      '\n\n' +
+      REPOS_MARKER +
+      '\n\n' +
+      links;
     replaced[repoName] = replacedRepo;
   }
 
