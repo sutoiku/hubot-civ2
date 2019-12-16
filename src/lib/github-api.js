@@ -268,7 +268,12 @@ async function getOctokit(userName) {
 
 function generateLinkDescription(repos) {
   const linkDdesc = [];
+
   for (const [repoName, { pr }] of Object.entries(repos)) {
+    if (!pr) {
+      continue;
+    }
+
     const jenkinsLink = `[![Build Status](https://ci-v2.stoic.com/buildStatus/icon?job=Modules%2F${repoName}%2FPR-${
       pr.number
     })](https://ci-v2.stoic.com/job/Modules/job/${repoName}/view/change-requests/job/PR-${pr.number}/)`;
@@ -282,6 +287,10 @@ function replaceLinks(repos, links) {
   const replaced = {};
   for (const [repoName, repo] of Object.entries(repos)) {
     const replacedRepo = Object.assign({}, repo);
+    if (!replacedRepo.pr) {
+      continue;
+    }
+
     const idx = replacedRepo.pr.body.indexOf(REPOS_MARKER);
     replacedRepo.pr.body =
       replacedRepo.pr.body.substr(0, idx === -1 ? replacedRepo.pr.body.length : idx) + REPOS_MARKER + '\n\n' + links;
