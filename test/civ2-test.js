@@ -21,8 +21,8 @@ describe('hubot integration', () => {
       require('../src/civ2')(this.robot);
     });
 
-    it('registers 16 listeners', function() {
-      expect(this.robot.hear).to.have.callCount(16);
+    it('registers 17 listeners', function() {
+      expect(this.robot.hear).to.have.callCount(17);
     });
     it('registers 1 responder', function() {
       expect(this.robot.respond).to.have.callCount(1);
