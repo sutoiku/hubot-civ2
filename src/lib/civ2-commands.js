@@ -167,7 +167,18 @@ function getRepoReport(repoName, branchName, data) {
   const statusReport = getStatusReport(data);
   const statusMessage = 'Statuses: ' + statusReport.message;
 
-  return ` * <${repoUrl}|${repoName}> : ${prStatus} - ${statusMessage}`;
+  const reviewsReport = data.pr ? getReviewReport(data.reviews) : '';
+
+  return ` * <${repoUrl}|${repoName}> : ${prStatus} - ${statusMessage} ${reviewsReport}`;
+}
+
+function getReviewReport(reviews) {
+  if (!reviews) {
+    return '(Not reviewed)';
+  }
+
+  const approved = reviews.find((it) => it.state === 'APPROVED');
+  return approved ? '(Approved)' : '(Not approved)';
 }
 
 function getStatusReport({ status }) {

@@ -136,15 +136,22 @@ async function createPr(repoName, branchName, targetBase, prText, octokit, optio
 }
 
 async function getAllReposBranchInformation(branchName, userName) {
+  const status = await Promise.all(
+    REPOS.map(async (repoName) => {
+      const repo = gh.getRepo(GITHUB_ORG_NAME, repoName);
+      const repoData = await repoHasBranch(repo, repoName, branchName, userName);
+      return Object.assign({ repo }, repoData);
+    })
+  );
+
   const allBranches = {};
-  for (const repoName of REPOS) {
-    const repo = gh.getRepo(GITHUB_ORG_NAME, repoName);
-    const repoData = await repoHasBranch(repo, repoName, branchName, userName);
-    if (repoData === null) {
-      continue;
+
+  for (const repoData of status) {
+    if (!!repoData.name) {
+      allBranches[repoData.name] = repoData;
     }
-    allBranches[repoName] = Object.assign({ repo }, repoData);
   }
+
   return allBranches;
 }
 
@@ -153,9 +160,9 @@ async function repoHasBranch(repo, repoName, branchName, userName) {
     const { data: branch } = await repo.getBranch(branchName);
     const { data: status } = await repo.listStatuses(branchName);
     const pr = await getBranchPr(repoName, branchName, userName);
-    //const reviews = await getReviews(repo, pr);
+    const reviews = await getReviews(repo, pr);
 
-    return { branch, status, pr /*, reviews*/ };
+    return { branch, status, pr, name: repoName, reviews };
   } catch (error) {
     if (error.message.startsWith('404')) {
       return null;
