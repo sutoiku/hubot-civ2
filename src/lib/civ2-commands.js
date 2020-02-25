@@ -2,9 +2,6 @@ const rp = require('request-promise');
 const ghApi = require('./github-api');
 const Jenkins = require('jenkins');
 
-const { CI_API_ROOT, CI_API_AUTH: token } = process.env;
-const headers = { Authorization: `Basic ${token}` };
-
 exports.deployV1 = function(tag) {
   return buildJob('Deployment/ci-v1', tag);
 };
@@ -38,9 +35,10 @@ exports.updateBot = function() {
 };
 
 exports.archive = function(repo, branch) {
+  const { CI_API_ROOT } = getEnv();
   const encodedBranch = encodeURIComponent(branch);
   const url = `${CI_API_ROOT}archive/${repo}/${encodedBranch}`;
-  return rp(url, { headers });
+  return rp(url, getAuthHeaders());
 };
 
 exports.deleteBranches = async function(branchName, userName) {
@@ -140,7 +138,10 @@ function getBaseUrl() {
     : `https://${HUBOT_JENKINS_AUTH}@${HUBOT_JENKINS_URL}`;
 }
 
+// -----------------------------------------------------------------------------
 // HELPERS
+// -----------------------------------------------------------------------------
+
 function formatBranchInformation(branchName, status) {
   const result = [];
   const ptLink = ghApi.getPTLink(branchName);
@@ -227,6 +228,17 @@ function getHelmReleaseName(domain) {
   const [subdomain] = domain.split('.');
 
   return subdomain === 'demo' || subdomain === 'dev' ? 'stoic' : 'stoic-' + subdomain;
+}
+
+function getEnv() {
+  const { CI_API_ROOT, CI_API_AUTH: token } = process.env;
+  return { CI_API_ROOT, CI_API_AUTH: token };
+}
+
+function getAuthHeaders() {
+  const { token } = getEnv();
+  const headers = { Authorization: `Basic ${token}` };
+  return { headers };
 }
 
 function getReviewsStatus({ reviews }) {
