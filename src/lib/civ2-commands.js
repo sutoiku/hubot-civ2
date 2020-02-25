@@ -103,6 +103,12 @@ exports.closePRs = async function(branchName, userName) {
   return `Closed PRs on ${closedList}.`;
 };
 
+exports.announcePRs = async function(brancName, text) {
+  const announced = await ghApi.announcePRs(brancName, text);
+  const announcedList = announced.map((it) => '`' + it + '`').join(',');
+  return `Announced on ${announcedList}.`;
+};
+
 exports.updatePRsDescriptions = async function(branchName, userName) {
   return ghApi.updatePRsDescriptions(branchName, userName);
 };

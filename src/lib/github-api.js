@@ -36,7 +36,8 @@ module.exports = {
   mergePRs,
   closePRs,
   updatePRsDescriptions,
-  deleteBranches
+  deleteBranches,
+  announcePRs
 };
 
 function findMissingPrs(branchInformation) {
@@ -62,10 +63,14 @@ async function createMissingPrs(branchName, userName, targetBase = 'master', opt
 
   const prText = await getPrText(branchName, userName, Object.keys(branchInformation));
 
+  const createPrPromises = prsToCreate.map((repoName) =>
+    createPr(repoName, branchName, targetBase, prText, octokit, options)
+  );
+
+  const responses = await Promise.all(createPrPromises);
   const created = {};
-  for (const repoName of prsToCreate) {
-    const newPr = await createPr(repoName, branchName, targetBase, prText, octokit, options);
-    created[repoName] = newPr;
+  for (const response of responses) {
+    created[response.repo.name] = response;
   }
 
   // asynchronously update descriptions with links after creation
@@ -79,13 +84,16 @@ async function mergePRs(branchName, userName) {
   const repos = await getAllReposBranchInformation(branchName, userName);
   const merged = [];
 
-  for (const [repo, { pr }] of Object.entries(repos)) {
-    if (!!pr) {
-      await octokit.pulls.merge({ owner: GITHUB_ORG_NAME, repo, pull_number: pr.number });
-      merged.push(repo);
+  const mergePromises = Objects.values(repos).map(({ repoName, pr }) => {
+    if (!pr) {
+      return null;
     }
-  }
 
+    merged.push(repoName);
+    return octokit.pulls.merge({ owner: GITHUB_ORG_NAME, repo: repoName, pull_number: pr.number });
+  });
+
+  await Promise.all(mergePromises);
   return merged;
 }
 
@@ -104,14 +112,42 @@ async function closePRs(branchName, userName) {
   return closed;
 }
 
+async function announcePRs(branchName, text) {
+  const repos = await getAllReposBranchInformation(branchName);
+  const octokit = await getOctokit();
+
+  const announced = [];
+
+  const announcePromises = Objects.values(repos).map(({ repoName, pr }) => {
+    if (!pr) {
+      return null;
+    }
+
+    announced.push(repoName);
+    return octokit.pulls.createReview({
+      owner: GITHUB_ORG_NAME,
+      repo: repo.name,
+      pull_number: pr.number,
+      body: text,
+      event: 'COMMENT'
+    });
+  });
+
+  await Promise.all(announcePromises);
+  return announced;
+}
+
 async function updatePRsDescriptions(branchName, userName) {
   const repos = await getAllReposBranchInformation(branchName);
   const linkDescription = generateLinkDescription(repos);
   const updated = replaceLinks(repos, linkDescription);
   const octokit = await getOctokit(userName);
-  for (const [repo, { pr }] of Object.entries(updated)) {
-    await octokit.pulls.update({ owner: GITHUB_ORG_NAME, repo, pull_number: pr.number, body: pr.body });
-  }
+
+  const updatePromises = Object.values(updated).map(({ repo, pr }) =>
+    octokit.pulls.update({ owner: GITHUB_ORG_NAME, repo: repo.name, pull_number: pr.number, body: pr.body })
+  );
+
+  return Promise.all(updatePromises);
 }
 
 async function createPr(repoName, branchName, targetBase, prText, octokit, options) {

@@ -258,6 +258,7 @@ module.exports = function(robot) {
   });
 
   robot.router.post('/hubot/civ2/create-pr', routes.createPr);
+  robot.router.post('/hubot/civ2/announce-pr', routes.announcePRs);
 };
 
 function respondToError(ex, msg) {

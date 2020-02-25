@@ -28,8 +28,8 @@ describe('hubot integration', () => {
       expect(this.robot.respond).to.have.callCount(1);
     });
 
-    it('registers 2 webhooks', function() {
-      expect(this.robot.router.post).to.have.callCount(2);
+    it('registers 3 webhooks', function() {
+      expect(this.robot.router.post).to.have.callCount(3);
     });
 
     it('registers an archive responder', function() {

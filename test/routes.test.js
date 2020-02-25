@@ -10,6 +10,7 @@ describe('Routes', () => {
   beforeEach(() => {
     responseMock = new ResponseMock();
     spies.createPRs = sinon.stub(civ2, 'createPRs');
+    spies.announcePRs = sinon.stub(civ2, 'announcePRs');
   });
 
   afterEach(() => sinon.restore());
@@ -53,6 +54,14 @@ describe('Routes', () => {
       const body = { branch: 'fix/my-mess', sign: 'd1eaaf73a1625689487e09be3f6bf925831722b2', draft: false };
       await routes.createPr({ body }, responseMock);
       sinon.assert.calledWith(spies.createPRs, 'fix/my-mess', 'magic', 'master', { draft: false });
+    });
+  });
+
+  describe('Announce PR', () => {
+    it('should correctly call the announcePR method, using draft by default', async () => {
+      const body = { branch: 'fix/my-mess', sign: 'd1eaaf73a1625689487e09be3f6bf925831722b2', text: 'wesh bro' };
+      await routes.announcePRs({ body }, responseMock);
+      sinon.assert.calledWith(spies.announcePRs, 'fix/my-mess', body.text);
     });
   });
 });
