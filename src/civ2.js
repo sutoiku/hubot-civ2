@@ -27,6 +27,7 @@
 //
 // Author:
 //   Yan[@sutoiku.com>]
+
 const civ2 = require('./lib/civ2-commands');
 const routes = require('./lib/routes');
 const gh = require('./lib/github');

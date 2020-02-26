@@ -118,19 +118,14 @@ async function announcePRs(branchName, text) {
 
   const announced = [];
 
-  const announcePromises = Objects.values(repos).map(({ repoName, pr }) => {
+  const announcePromises = Object.values(repos).map(({ pr, name }) => {
     if (!pr) {
       return null;
     }
 
-    announced.push(repoName);
-    return octokit.pulls.createReview({
-      owner: GITHUB_ORG_NAME,
-      repo: repo.name,
-      pull_number: pr.number,
-      body: text,
-      event: 'COMMENT'
-    });
+    announced.push(name);
+    const params = { owner: GITHUB_ORG_NAME, repo: name, pull_number: pr.number, body: text, event: 'COMMENT' };
+    return octokit.pulls.createReview(params);
   });
 
   await Promise.all(announcePromises);
