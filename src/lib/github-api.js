@@ -88,7 +88,7 @@ async function mergePRs(branchName, userName) {
   const repos = await getAllReposBranchInformation(branchName, userName);
   const merged = [];
 
-  const mergePromises = Objects.values(repos).map(({ repoName, pr }) => {
+  const mergePromises = Object.values(repos).map(({ repoName, pr }) => {
     if (!pr) {
       return null;
     }
