@@ -160,7 +160,7 @@ async function createPr(repoName, branchName, targetBase, prText, octokit, optio
   }
   try {
     const { data } = await octokit.pulls.create(prSpec);
-    return data;
+    return Object.assign({ repo: { name: repoName } }, data);
   } catch (err) {
     return { error: err };
   }
