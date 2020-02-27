@@ -324,7 +324,7 @@ function generateLinkDescription(repos) {
 function replaceLinks(repos, links) {
   const replaced = {};
   for (const [repoName, repo] of Object.entries(repos)) {
-    const replacedRepo = Object.assign({}, repo);
+    const replacedRepo = Object.assign({ name: repoName }, repo);
     if (!replacedRepo.pr) {
       continue;
     }
