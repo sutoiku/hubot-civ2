@@ -71,7 +71,7 @@ async function createMissingPrs(branchName, userName, targetBase = 'master', opt
   const created = {};
   for (const response of responses) {
     if (response.repo && response.repo.name) {
-      created[response.repo.name] = response;
+      created[response.head.repo.name] = response;
     } else {
       console.log('Unexpected response from createPr', response);
     }
@@ -142,8 +142,8 @@ async function updatePRsDescriptions(branchName, userName) {
   const updated = replaceLinks(repos, linkDescription);
   const octokit = await getOctokit(userName);
 
-  const updatePromises = Object.values(updated).map(({ repo, pr }) =>
-    octokit.pulls.update({ owner: GITHUB_ORG_NAME, repo: repo.name, pull_number: pr.number, body: pr.body })
+  const updatePromises = Object.values(updated).map(({ repoName, pr }) =>
+    octokit.pulls.update({ owner: GITHUB_ORG_NAME, repo: repoName, pull_number: pr.number, body: pr.body })
   );
 
   return Promise.all(updatePromises);
@@ -175,7 +175,7 @@ async function getAllReposBranchInformation(branchName, userName) {
     REPOS.map(async (repoName) => {
       const repo = gh.getRepo(GITHUB_ORG_NAME, repoName);
       const repoData = await repoHasBranch(repo, repoName, branchName, userName);
-      return Object.assign({ repo }, repoData);
+      return Object.assign({ repo, repoName }, repoData);
     })
   );
 
