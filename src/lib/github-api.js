@@ -70,7 +70,11 @@ async function createMissingPrs(branchName, userName, targetBase = 'master', opt
   const responses = await Promise.all(createPrPromises);
   const created = {};
   for (const response of responses) {
-    created[response.repo.name] = response;
+    if (response.repo && response.repo.name) {
+      created[response.repo.name] = response;
+    } else {
+      console.log('Unexpected response from createPr', response);
+    }
   }
 
   // asynchronously update descriptions with links after creation
@@ -160,9 +164,9 @@ async function createPr(repoName, branchName, targetBase, prText, octokit, optio
   }
   try {
     const { data } = await octokit.pulls.create(prSpec);
-    return Object.assign({ repo: { name: repoName } }, data);
+    return data;
   } catch (err) {
-    return { error: err };
+    return { repo: { name: repoName }, error: err };
   }
 }
 
@@ -223,7 +227,7 @@ async function deleteBranches(branchName, userName) {
   const deleted = [];
   const repos = await getAllReposBranchInformation(branchName, userName);
   for (const [repoName, repo] of Object.entries(repos)) {
-    await deleteBranch(repo, branchName);
+    await deleteBranch(repo.name, branchName);
     deleted.push(repoName);
   }
 
