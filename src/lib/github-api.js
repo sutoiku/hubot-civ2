@@ -71,7 +71,7 @@ async function createMissingPrs(branchName, userName, targetBase = 'master', opt
   const created = {};
   for (const response of responses) {
     if (response.repo && response.repo.name) {
-      created[response.head.repo.name] = response;
+      created[response.repo.name] = response;
     } else {
       console.log('Unexpected response from createPr', response);
     }
@@ -163,8 +163,8 @@ async function createPr(repoName, branchName, targetBase, prText, octokit, optio
     prSpec.title = prText.name;
   }
   try {
-    const { data } = await octokit.pulls.create(prSpec);
-    return data;
+    const response = await octokit.pulls.create(prSpec);
+    return Object.assign({ repo: { name: repoName } }, response ? response.data : {});
   } catch (err) {
     return { repo: { name: repoName }, error: err };
   }
