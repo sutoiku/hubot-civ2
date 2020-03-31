@@ -113,6 +113,10 @@ exports.updatePRsDescriptions = async function(branchName, userName) {
   return ghApi.updatePRsDescriptions(branchName, userName);
 };
 
+exports.commentPtReferences = async function(branchName) {
+  return ghApi.commentPtReferences(branchName);
+};
+
 function getPrlist(created, withError) {
   return Object.keys(created)
     .filter((it) => (withError ? !!created[it].error : !created[it].error))

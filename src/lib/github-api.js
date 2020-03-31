@@ -28,6 +28,8 @@ const pivotalTracker = initializePivotalTracker();
 const GITHUB_ORG_NAME = 'sutoiku';
 const REPOS_MARKER = '# REPOS';
 
+const ONE_MINUTE = 60 * 1e3;
+
 module.exports = {
   getAllReposBranchInformation,
   getPTLink,
@@ -37,7 +39,8 @@ module.exports = {
   closePRs,
   updatePRsDescriptions,
   deleteBranches,
-  announcePRs
+  announcePRs,
+  commentPtReferences
 };
 
 function findMissingPrs(branchInformation) {
@@ -234,7 +237,77 @@ async function deleteBranches(branchName, userName) {
   return deleted;
 }
 
+async function addCommentPrReview(repos, body) {
+  const octokit = await getOctokit();
+  const commentPromises = [];
+  for (const [repoName, repo] of Object.entries(repos)) {
+    commentPromises.push(
+      octokit.pulls.createReview({
+        owner: GITHUB_ORG_NAME,
+        repo: repoName,
+        pull_number: repo.pr.number,
+        body,
+        event: 'COMMENT'
+      })
+    );
+  }
+
+  return Promise.all(commentPromises);
+}
+
+async function commentPtReferences(branchName) {
+  const ptId = getPtIdFromBranchName(branchName);
+  if (!ptId) {
+    return null;
+  }
+
+  const ptReferences = await searchPTInAllRepos(ptId);
+  if (!ptReferences) {
+    return null;
+  }
+
+  const message = formatPTReferences(ptId, ptReferences);
+  const repos = await getAllReposBranchInformation(branchName);
+  // Let's add the comment in only 1 of the repos, no spam.
+  const firstRepoName = Object.keys(repos)[0];
+  return addCommentPrReview({ [firstRepoName]: repos[firstRepoName] }, message);
+}
+
+async function searchPTInAllRepos(ptId, retryCount = 0) {
+  try {
+    return await doSearchPTInAllRepos(ptId);
+  } catch (err) {
+    if (err.message.includes('API rate limit exceeded') && retryCount < 5) {
+      await sleep(ONE_MINUTE);
+      return searchPTInAllRepos(ptId, retryCount + 1);
+    }
+
+    throw err;
+  }
+}
+
+async function doSearchPTInAllRepos(ptId) {
+  const octokit = await getOctokit();
+  const q = `${ptId}+org:${GITHUB_ORG_NAME}`;
+
+  const { data } = await octokit.search.code({ q });
+  if (!data || data.total_count === 0) {
+    return {};
+  }
+
+  const resultsPerRepo = {};
+  for (const item of data.items) {
+    const repoName = item.repository.name;
+    resultsPerRepo[repoName] = resultsPerRepo[repoName] || [];
+    resultsPerRepo[repoName].push(item);
+  }
+  return resultsPerRepo;
+}
+
+// -----------------------------------------------------------------------------
 // HELPERS
+// -----------------------------------------------------------------------------
+
 async function getPrText(branchName, userName, repos) {
   const strRepos = repos.map((it) => '`' + it + '`').join(',');
   const user = helpers.getUserFromSlackLogin(userName);
@@ -272,7 +345,11 @@ async function getPrTextWithPivotal(branchName, message, strRepos) {
 
 function getPTLink(branchName) {
   const ptId = getPtIdFromBranchName(branchName);
-  return !!ptId && `https://www.pivotaltracker.com/story/show/${ptId}`;
+  return !!ptId && makePtLink(ptId);
+}
+
+function makePtLink(ptId) {
+  return `https://www.pivotaltracker.com/story/show/${ptId}`;
 }
 
 function getPtIdFromBranchName(branchName) {
@@ -304,7 +381,7 @@ function initializePivotalTracker() {
 }
 
 async function getOctokit(userName) {
-  const key = await aws.getUserKey(userName, 'github');
+  const key = userName ? await aws.getUserKey(userName, 'github') : null;
   return Octokit({ auth: key || GITHUB_TOKEN, previews: ['shadow-cat'] });
 }
 
@@ -344,4 +421,26 @@ function replaceLinks(repos, links) {
   }
 
   return replaced;
+}
+
+function formatPTReferences(ptId, ptRefs) {
+  const messageParts = [
+    `Pardon the interruption, but there seems to be some TODOs attached to this PT [#${ptId}](${makePtLink(ptId)}). `
+  ];
+  for (const [repoName, refs] of Object.entries(ptRefs)) {
+    const refList = refs.map(formatRefForList).join('\n');
+    messageParts.push(`In \`${repoName}\` (${refs.length}):\n\n${refList}`);
+  }
+
+  messageParts.push('Did you take care of it ?');
+
+  return messageParts.join('\n\n');
+}
+
+function formatRefForList({ html_url, name }) {
+  return ` * [${name}](${html_url})`;
+}
+
+async function sleep(duration) {
+  return new Promise((resolve) => setTimeout(resolve, duration));
 }

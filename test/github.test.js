@@ -17,7 +17,14 @@ describe('github', () => {
   };
 
   it('identifies pr closings', () => {
-    const prmessage = gh.getPRMerge(payload);
-    expect(prmessage).to.deep.equal({ id: 123, repo: 'titi', branch: 'toto', base: 'master' });
+    const prmessage = gh.getPR(payload);
+    expect(prmessage).to.deep.equal({
+      id: 123,
+      repo: 'titi',
+      branch: 'toto',
+      base: 'master',
+      action: 'closed',
+      merged: true
+    });
   });
 });

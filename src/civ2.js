@@ -33,6 +33,8 @@ const routes = require('./lib/routes');
 const gh = require('./lib/github');
 const aws = require('./lib/aws');
 
+const parsedPrs = new Map();
+
 module.exports = function(robot) {
   const targets = [
     { trigger: 'civ1', method: civ2.deployV1 },
@@ -222,39 +224,55 @@ module.exports = function(robot) {
   robot.router.post('/hubot/civ2/github-webhook', async (req, res) => {
     const room = '#testing-ci';
     const data = req.body.payload != null ? JSON.parse(req.body.payload) : req.body;
-    const prMerge = gh.getPRMerge(data);
+    const pr = gh.getPRMerge(data);
 
-    if (!prMerge) {
+    if (!pr) {
       return res.send('OK');
     }
 
-    const { repo, branch, id, base } = prMerge;
+    const { repo, branch, id, base, action, merged } = pr;
 
-    if (base !== 'master' && base !== 'staging') {
-      const msg = `The PR ${repo}#${id} was not forked from master or staging. Won't delete ${branch}.`;
+    if (base !== 'master') {
+      const msg = `The PR ${repo}#${id} was not forked from master. Won't delete ${branch}.`;
       robot.messageRoom(room, msg);
       return console.log(msg);
     }
 
-    console.log('Merged PR', repo, branch);
+    if (action === 'closed' && merged === true) {
+      console.log('Merged PR', repo, branch);
 
-    try {
-      await civ2.deleteBranch(repo, branch);
-      const message = `<https://github/com/sutoiku/${repo}/branches|Branch ${branch}> of <https://github/com/sutoiku/${repo}|${repo}> was merged into ${base}, I deleted it.`;
-      robot.messageRoom(room, message);
-    } catch (ex) {
-      robot.messageRoom(room, `An error occured while deleting branch "${branch}" (${ex.message}).`);
-      res.status(500).send('Error');
+      try {
+        await civ2.deleteBranch(repo, branch);
+        const message = `<https://github/com/sutoiku/${repo}/branches|Branch ${branch}> of <https://github/com/sutoiku/${repo}|${repo}> was merged into ${base}, I deleted it.`;
+        robot.messageRoom(room, message);
+      } catch (ex) {
+        robot.messageRoom(room, `An error occured while deleting branch "${branch}" (${ex.message}).`);
+        res.status(500).send('Error');
+      }
+
+      try {
+        await civ2.destroyFeatureCluster(branch);
+      } catch (ex) {
+        robot.messageRoom(
+          room,
+          `An error occured while triggering destruction of feature cluster "${branch}" (${ex.message}).`
+        );
+        res.status(500).send('Error');
+      }
     }
 
-    try {
-      await civ2.destroyFeatureCluster(branch);
-    } catch (ex) {
-      robot.messageRoom(
-        room,
-        `An error occured while triggering destruction of feature cluster "${branch}" (${ex.message}).`
-      );
-      res.status(500).send('Error');
+    if (action === 'opened') {
+      if (parsedPrs.has(branch)) {
+        return;
+      }
+
+      try {
+        await civ2.commentPtReferences(branch);
+        parsedPrs.set(branch, Date.now());
+      } catch (err) {
+        robot.messageRoom(room, `An error occured while looking for PT references in "${branch}": ${err}`);
+        res.status(500).send('Error');
+      }
     }
   });
 

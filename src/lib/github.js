@@ -1,11 +1,10 @@
-exports.getPRMerge = function(body) {
+exports.getPR = function(body) {
   if (body.pull_request) {
     const { id, pull_request, action } = body;
     const branch = pull_request.head.ref;
     const repo = pull_request.head.repo.name;
     const base = pull_request.base.ref;
-    if (action && action === 'closed' && pull_request.merged === true) {
-      return { id, repo, branch, base };
-    }
+
+    return { id, repo, branch, base, merged: pull_request.merged, action };
   }
 };
