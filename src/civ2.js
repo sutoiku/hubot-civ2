@@ -33,6 +33,8 @@ const routes = require('./lib/routes');
 const gh = require('./lib/github');
 const aws = require('./lib/aws');
 
+const REPLICATED_STABLE_CHANNEL = 'Stable';
+const DEMO = { url: 'demo.stoic.cc', name: 'demo' };
 const parsedPrs = new Map();
 
 module.exports = function(robot) {
@@ -221,6 +223,27 @@ module.exports = function(robot) {
     }
   });
 
+  robot.hear(/Publicly release (\S*)/, async (msg) => {
+    const releaseSource = msg.match[1];
+    const messages = [];
+    try {
+      const targetVersion = await findVersion(releaseSource);
+      messages.push(`Version on instance ${releaseSource} is ${targetVersion}.`);
+      await Promise.all([
+        civ2.updateInstance(DEMO.url, DEMO.name, targetVersion),
+        civ2.replicatedPromotion(REPLICATED_STABLE_CHANNEL, targetVersion)
+      ]);
+
+      messages.push(
+        `Instance <https://${DEMO.url}|${DEMO.name}> is updating to version "${targetVersion}"`,
+        `Replicated "${REPLICATED_STABLE_CHANNEL}" channel gets updated.`
+      );
+      msg.reply(messages.join('\n'));
+    } catch (err) {
+      respondToError(err, msg);
+    }
+  });
+
   robot.router.post('/hubot/civ2/github-webhook', async (req, res) => {
     const room = '#testing-ci';
     const data = req.body.payload != null ? JSON.parse(req.body.payload) : req.body;
@@ -288,4 +311,12 @@ function respondToError(ex, msg) {
 function replyError(ex, msg) {
   console.error(ex);
   msg.send(`An error occured (${ex.message}).`);
+}
+
+async function findVersion(source) {
+  if (['dev', 'demo', 'latest'].includes(source)) {
+    return civ2.getLatestVersion(source);
+  }
+
+  return source.startsWith('0.') ? source : null;
 }

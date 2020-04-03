@@ -9,7 +9,7 @@ exports.createPr = async function(req, res) {
     return res.status(400).send('Payload is mandatory');
   }
 
-  console.log('Received payload:' + req.body);
+  console.log('Received payload:', req.body);
 
   const { branch, author = 'magic', sign, target = 'master', dryrun, draft = true } = req.body;
 

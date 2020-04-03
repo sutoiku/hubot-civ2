@@ -16,7 +16,7 @@ exports.deployK8s = function(tag) {
 
 exports.updateInstance = async function(receivedDomain, env, requestedVersion) {
   const domain = stripHttp(receivedDomain);
-  const version = requestedVersion || (await getLatestVersion());
+  const version = requestedVersion || (await exports.getLatestVersion());
   const instanceName = 'k8s-' + domain;
   const namespace = domain.replace(/\./g, '-');
   const release = getHelmReleaseName(domain);
@@ -115,6 +115,18 @@ exports.updatePRsDescriptions = async function(branchName, userName) {
 
 exports.commentPtReferences = async function(branchName) {
   return ghApi.commentPtReferences(branchName);
+};
+
+exports.getLatestVersion = async function(instance = 'latest') {
+  const suffix = instance === 'dev' ? 'com' : 'cc';
+  const url = `https://${instance}.stoic.${suffix}/health`;
+  const healthBody = await rp(url);
+  const { version } = JSON.parse(healthBody);
+  return version;
+};
+
+exports.replicatedPromotion = async function(channel, version) {
+  return buildJob('Deployment/promote-replicated', undefined, { channel, version, releaseNotes: '' });
 };
 
 function getPrlist(created, withError) {
@@ -225,13 +237,6 @@ function getPRStatus({ pr }) {
     return `<${html_url}|PR #${number} (${state})>`;
   }
   return 'no PR';
-}
-
-async function getLatestVersion() {
-  const url = `https://latest.stoic.cc/health`;
-  const healthBody = await rp(url);
-  const { version } = JSON.parse(healthBody);
-  return version;
 }
 
 function getHelmReleaseName(domain) {
