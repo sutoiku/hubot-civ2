@@ -21,8 +21,8 @@ describe('hubot integration', () => {
       require('../src/civ2')(this.robot);
     });
 
-    it('registers 17 listeners', function() {
-      expect(this.robot.hear).to.have.callCount(17);
+    it('registers 18 listeners', function() {
+      expect(this.robot.hear).to.have.callCount(18);
     });
     it('registers 1 responder', function() {
       expect(this.robot.respond).to.have.callCount(1);
@@ -62,6 +62,10 @@ describe('hubot integration', () => {
 
     it('registers a cluster destruction listener', function() {
       expect(this.robot.hear.getCall(7).args[0].toString()).to.equal('/destroy feature instance (\\S*)/');
+    });
+
+    it('registers a public release listener', function() {
+      expect(this.robot.hear.getCall(17).args[0].toString()).to.equal('/Publicly release (\\S*)/');
     });
   });
 });
