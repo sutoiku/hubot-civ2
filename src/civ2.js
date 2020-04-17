@@ -270,6 +270,7 @@ module.exports = function(robot) {
         await civ2.commentPtReferences(branch);
         parsedPrs.set(branch, Date.now());
       } catch (err) {
+        console.error(err);
         robot.messageRoom(room, `An error occured while looking for PT references in "${branch}": ${err}`);
         res.status(500).send('Error');
       }
