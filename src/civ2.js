@@ -224,7 +224,7 @@ module.exports = function(robot) {
   robot.router.post('/hubot/civ2/github-webhook', async (req, res) => {
     const room = '#testing-ci';
     const data = req.body.payload != null ? JSON.parse(req.body.payload) : req.body;
-    const pr = gh.getPRMerge(data);
+    const pr = gh.getPR(data);
 
     if (!pr) {
       return res.send('OK');
