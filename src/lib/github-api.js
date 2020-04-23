@@ -241,7 +241,7 @@ async function addCommentPrReview(repos, body) {
   const octokit = await getOctokit();
   const commentPromises = [];
   for (const [repoName, repo] of Object.entries(repos)) {
-    /*commentPromises.push(
+    commentPromises.push(
       octokit.pulls.createReview({
         owner: GITHUB_ORG_NAME,
         repo: repoName,
@@ -249,8 +249,7 @@ async function addCommentPrReview(repos, body) {
         body,
         event: 'COMMENT'
       })
-    );*/
-    console.log(`Add comment to ${repoName} --- ${body}`);
+    );
   }
 
   return Promise.all(commentPromises);
@@ -293,7 +292,7 @@ async function doSearchPTInAllRepos(ptId) {
 
   const { data } = await octokit.search.code({ q });
   if (!data || data.total_count === 0) {
-    return {};
+    return null;
   }
 
   const resultsPerRepo = {};
