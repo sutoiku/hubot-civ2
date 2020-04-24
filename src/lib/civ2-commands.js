@@ -256,7 +256,7 @@ function getStatusReport({ status }) {
   const nonOkMessage = formatStatusMessage(nonOkStatus);
 
   return {
-    message: okStatus === totalStatus ? ':white_check_mark:' : `${okStatus}/${totalStatus} ${nonOkMessage} are OK`,
+    message: okStatus === totalStatus ? ':white_check_mark:' : `${okStatus}/${totalStatus} are OK ${nonOkMessage}`,
     mergeable: okStatus === totalStatus
   };
 }
