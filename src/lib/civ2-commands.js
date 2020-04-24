@@ -232,7 +232,7 @@ function getReviewReport({ pr, reviews }) {
 function countReviewByState(reviews) {
   const states = {};
   for (const { state } of reviews) {
-    states[state] = states[states] || 0;
+    states[state] = states[state] || 0;
     states[state]++;
   }
 
