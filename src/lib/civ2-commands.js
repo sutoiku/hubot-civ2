@@ -2,6 +2,9 @@ const rp = require('request-promise');
 const ghApi = require('./github-api');
 const Jenkins = require('jenkins');
 
+const REQUIRED_STATUS = new Set(['linting', 'unit-tests', 'stoic-assemble', 'stoic-integration-tests']);
+const REVIEW_ICONS = { PENDING: '🟡', COMMENTED: '⚪', APPROVED: '✔️', REQUEST_CHANGES: '❌' };
+
 exports.deployV1 = function(tag) {
   return buildJob('Deployment/ci-v1', tag);
 };
@@ -166,7 +169,7 @@ function getBaseUrl() {
 
 function formatBranchInformation(branchName, status) {
   const result = [];
-  const ptLink = ghApi.getPTLink(branchName);
+  const ptLink = ghApi.getPTLink(branchName, { slack: true });
 
   if (ptLink) {
     result.push(ptLink);
@@ -176,11 +179,19 @@ function formatBranchInformation(branchName, status) {
     return `Branch "${branchName}" was not found on the product repositories`;
   }
 
+  let mergeable = true;
   for (const [repo, data] of Object.entries(status)) {
-    result.push(getRepoReport(repo, branchName, data));
+    const repoReport = getRepoReport(repo, branchName, data);
+    mergeable = mergeable && repoReport.mergeable;
+    result.push(repoReport.message);
   }
 
-  return result.join('\n');
+  const mergeableMessage = mergeable
+    ? "\n\nIt seems to be mergeable. It you're done with the PR feedback comments, just ask me `merge pull requests " +
+      branchName +
+      '` and I will do it for you.'
+    : '';
+  return result.join('\n') + mergeableMessage;
 }
 
 function getRepoReport(repoName, branchName, data) {
@@ -188,46 +199,100 @@ function getRepoReport(repoName, branchName, data) {
   const repoUrl = `https://github.com/sutoiku/${repoName}/tree/${branchName}`;
 
   const statusReport = getStatusReport(data);
-  const statusMessage = 'Statuses: ' + statusReport.message;
+  const statusMessage = '*Statuses*: ' + statusReport.message;
 
-  const reviewsReport = data.pr ? getReviewReport(data.reviews) : '';
+  const { message: reviewsMessage, approved } = getReviewReport(data);
 
-  return ` * <${repoUrl}|${repoName}> : ${prStatus} - ${statusMessage} ${reviewsReport}`;
+  return {
+    mergeable: statusReport.mergeable && approved,
+    message: ` * <${repoUrl}|${repoName}> : ${prStatus} - ${statusMessage} - ${reviewsMessage}`
+  };
 }
 
-function getReviewReport(reviews) {
-  if (!reviews) {
-    return '(Not reviewed)';
+function getReviewReport({ pr, reviews }) {
+  if (!pr) {
+    return { message: '', approved: false };
   }
 
-  const approved = reviews.find((it) => it.state === 'APPROVED');
-  return approved ? '(Approved)' : '(Not approved)';
+  if (!reviews) {
+    return 'Not reviewed yet';
+  }
+
+  const reviewCount = countReviewByState(reviews);
+  let approved = false;
+  const messageParts = [];
+  for (const [state, count] of Object.entries(reviewCount)) {
+    const icon = REVIEW_ICONS[state] || '';
+    approved = approved || state === 'APPROVED';
+    messageParts.push(`${icon} ${count} ${state.toLowerCase()}`);
+  }
+  return { approved, message: `*Reviews*: ${messageParts.join(',')}` };
+}
+
+function countReviewByState(reviews) {
+  const states = {};
+  for (const { state } of reviews) {
+    states[state] = states[states] || 0;
+    states[state]++;
+  }
+
+  return states;
 }
 
 function getStatusReport({ status }) {
-  const statuses = keepLatestStatus(status);
+  const statuses = keepLatestRequiredStatus(status);
+
   let okStatus = 0;
-  for (const { state } of Object.values(statuses)) {
+  const nonOkStatus = {};
+  for (const [context, { state }] of Object.entries(statuses)) {
     if (state === 'success') {
       okStatus++;
+    } else {
+      nonOkStatus[state] = nonOkStatus[state] || [];
+      nonOkStatus[state].push(context);
     }
   }
   const totalStatus = Object.keys(statuses).length;
+  const nonOkMessage = formatStatusMessage(nonOkStatus);
 
   return {
-    message: okStatus === totalStatus ? 'All OK' : `${okStatus}/${totalStatus} OK`,
+    message: okStatus === totalStatus ? ':white_check_mark:' : `${okStatus}/${totalStatus} ${nonOkMessage} are OK`,
     mergeable: okStatus === totalStatus
   };
 }
 
-function keepLatestStatus(statuses) {
+function formatStatusMessage(nonOkStatus) {
+  if (Object.keys(nonOkStatus).length === 0) {
+    return '';
+  }
+
+  const nonOkMessageParts = [];
+  for (const [name, contexts] of Object.entries(nonOkStatus)) {
+    nonOkMessageParts.push(`${name}: ${contexts.map((it) => '`' + it + '`').join(',')}`);
+  }
+  return `(${nonOkMessageParts.join(',')})`;
+}
+
+function keepLatestRequiredStatus(statuses) {
   const result = {};
+
   for (const stat of statuses) {
-    const { context, updated_at, state } = stat;
+    const { context, updated_at } = stat;
+    if (!REQUIRED_STATUS.has(context)) {
+      continue;
+    }
+
     if (!result[context] || new Date(updated_at) > new Date(result[context].updated_at)) {
       result[context] = stat;
     }
   }
+
+  for (const requiredStatus of REQUIRED_STATUS) {
+    if (!result[requiredStatus]) {
+      result[requiredStatus] = { state: 'pending' };
+    }
+  }
+
   return result;
 }
 

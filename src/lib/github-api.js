@@ -343,9 +343,21 @@ async function getPrTextWithPivotal(branchName, message, strRepos) {
   }
 }
 
-function getPTLink(branchName) {
+function getPTLink(branchName, { markdown = false, slack = false } = {}) {
   const ptId = getPtIdFromBranchName(branchName);
-  return !!ptId && makePtLink(ptId);
+  if (!ptId) {
+    return;
+  }
+
+  const link = makePtLink(ptId);
+  if (markdown) {
+    return `[PT #${ptId}](${link})`;
+  }
+
+  if (slack) {
+    return `<${link}|PT #${ptId}>`;
+  }
+  return link;
 }
 
 function makePtLink(ptId) {
