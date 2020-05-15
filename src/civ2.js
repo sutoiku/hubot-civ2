@@ -290,8 +290,9 @@ module.exports = function(robot) {
       }
 
       try {
-        await civ2.commentPtReferences(branch);
         parsedPrs.set(branch, Date.now());
+        await civ2.commentPtReferences(branch);
+        cleanParsedPrs();
       } catch (err) {
         console.error(err);
         robot.messageRoom(room, `An error occured while looking for PT references in "${branch}": ${err}`);
@@ -303,6 +304,18 @@ module.exports = function(robot) {
   robot.router.post('/hubot/civ2/create-pr', routes.createPr);
   robot.router.post('/hubot/civ2/announce-pr', routes.announcePRs);
 };
+
+const MAX_PRDATE = 1000 * 60 * 5;
+
+function cleanParsedPrs() {
+  const now = Date.now();
+  for (const pr of parsedPrs.keys()) {
+    const prDate = parsedPrs.get(pr);
+    if (now - prDate > MAX_PRDATE) {
+      parsedPrs.delete(pr);
+    }
+  }
+}
 
 function respondToError(ex, msg) {
   console.error(ex);
