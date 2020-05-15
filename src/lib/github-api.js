@@ -312,7 +312,9 @@ async function getPrText(branchName, userName, repos) {
   const strRepos = repos.map((it) => '`' + it + '`').join(',');
   const user = helpers.getUserFromSlackLogin(userName);
   const displayName = user ? user.firstName : userName;
-  const message = `This pull request has been created by ${displayName} via the bot.`;
+
+  const key = userName ? await aws.getUserKey(userName, 'github') : null;
+  const message = !!key ? '' : `This pull request has been created by ${displayName} via the bot.`;
 
   if (!pivotalTracker) {
     const ptLink = getPTLink(branchName);
