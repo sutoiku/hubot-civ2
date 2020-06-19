@@ -257,7 +257,7 @@ async function addCommentPrReview(repos, body) {
 
 async function commentPtReferences(branchName) {
   const ptId = getPtIdFromBranchName(branchName);
-  if (!ptId) {
+  if (!ptId || ('' + ptId).length < 8) {
     return null;
   }
 
