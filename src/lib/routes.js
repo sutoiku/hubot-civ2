@@ -10,9 +10,7 @@ exports.createPr = async function(req, res) {
   }
 
   console.log('Received payload:', req.body);
-
   const { branch, author = 'magic', sign, target = 'master', dryrun, draft = true } = req.body;
-
   if (!validateBranchRequest(branch, sign, res, 'createPR')) {
     return;
   }

@@ -253,14 +253,7 @@ module.exports = function(robot) {
       return res.send('OK');
     }
 
-    const { repo, branch, id, base, action, merged } = pr;
-
-    if (base !== 'master') {
-      const msg = `The PR ${repo}#${id} was not forked from master. Won't delete ${branch}.`;
-      robot.messageRoom(room, msg);
-      return console.log(msg);
-    }
-
+    const { repo, branch, base, action, merged } = pr;
     if (action === 'closed' && merged === true) {
       console.log('Merged PR', repo, branch);
 
@@ -282,6 +275,8 @@ module.exports = function(robot) {
         );
         res.status(500).send('Error');
       }
+
+      return res.send('OK');
     }
 
     if (action === 'opened') {
@@ -293,6 +288,7 @@ module.exports = function(robot) {
         parsedPrs.set(branch, Date.now());
         await civ2.commentPtReferences(branch);
         cleanParsedPrs();
+        return res.send('OK');
       } catch (err) {
         console.error(err);
         robot.messageRoom(room, `An error occured while looking for PT references in "${branch}": ${err}`);
