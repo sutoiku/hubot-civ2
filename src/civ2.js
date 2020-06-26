@@ -217,7 +217,7 @@ module.exports = function(robot) {
     const [, instance, , env, , version] = msg.match;
     try {
       const targetVersion = await civ2.updateInstance(instance, env, version);
-      msg.reply(`Instance <${instance}|${instance}> is updating to version "${targetVersion}"`);
+      msg.reply(`Instance <${instance}|${instance}> on "${env}" is updating to version "${targetVersion}"`);
     } catch (err) {
       respondToError(err, msg);
     }
