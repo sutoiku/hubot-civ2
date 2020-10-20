@@ -133,6 +133,10 @@ exports.replicatedPromotion = async function(channel, version) {
 };
 
 function getPrlist(created, withError) {
+  if (!created) {
+    return '';
+  }
+
   return Object.keys(created)
     .filter((it) => (withError ? !!created[it].error : !created[it].error))
     .map((it) => '`' + it + '`')
