@@ -8,8 +8,8 @@
 //   deploy to civ1 <optional tag> - deploys the specified image:tag to civ1. (default tag : release-candidate)
 //   deploy to dockercloud <optional tag> - deploys the specified image:tag to docker. (default tag : release-candidate)
 //   deploy to kubernetes <optional tag> - deploys the specified image:tag to kubernetes dev cluster. (default tag : release-candidate)
-//   release stoic <version> - releases <version> in the wild.
-//   update instance <instance domain> on <env> environment
+//   release stoic <version> - releases <version> in the wild, update latest
+//   update instance <instance domain> on <env> environment - update a specific instance (like EDF): update instance edf.stoic.cc on demo environment
 //   update instance <instance domain> on <env> environment to version <version>
 //   rollback stoic <version> - rollback to stoic <version>
 //   archive <repository> <branch>
