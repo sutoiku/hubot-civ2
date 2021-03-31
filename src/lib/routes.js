@@ -19,7 +19,6 @@ exports.createPr = async function(req, res) {
     ? `Request OK, would create PRs on branch "${branch}", author "${author}", target "${target}"`
     : await civ2.createPRs(branch, author, target, { draft });
   res.send(message);
-  console.log(message);
 };
 
 exports.announcePRs = async function(req, res) {
