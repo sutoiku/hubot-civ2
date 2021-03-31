@@ -34,14 +34,22 @@ const aws = require('./lib/aws');
 
 const REPLICATED_STABLE_CHANNEL = 'Stable';
 const DEMO = { url: 'demo.stoic.cc', name: 'demo' };
-const parsedPrs = new Map();
+const { NODE_ENV } = process.env;
 
 module.exports = function(robot) {
+  const parsedPrs = new Map();
+  const mergedPRs = new Map();
+
+  // -----------------------------------------------------------------------------
+  // MESSAGE TRIGGERS
+  // -----------------------------------------------------------------------------
+
   const targets = [
     { trigger: 'civ1', method: civ2.deployV1 },
     { trigger: 'dockercloud', method: civ2.deployDocker },
     { trigger: 'kubernetes', method: civ2.deployK8s }
   ];
+
   for (const target of targets) {
     const re = new RegExp(`deploy to ${target.trigger} ?(\S*)`);
     robot.hear(re, async (msg) => {
@@ -130,11 +138,16 @@ module.exports = function(robot) {
 
   robot.hear(/create pull requests (\S*)( to (\S*))?/, async (msg) => {
     const branchName = msg.match[1];
-    const target = msg.match.length > 3 ? msg.match[3] : 'master';
+    const target = msg.match[3] || 'master';
+
     msg.reply(`Creating PRs for branch ${branchName}...`);
-    const message = await civ2.createPRs(branchName, msg.message.user.name, target, { draft: true });
-    const status = await civ2.getBranchInformation(branchName, msg.message.user.name);
-    msg.reply(`${message}\n${status}`);
+    try {
+      const message = await civ2.createPRs(branchName, msg.message.user.name, target, { draft: true });
+      const status = await civ2.getBranchInformation(branchName, msg.message.user.name);
+      msg.reply(`${message}\n${status}`);
+    } catch (err) {
+      respondToError(err, msg);
+    }
   });
 
   robot.hear(/merge pull requests (\S*)/, async (msg) => {
@@ -175,7 +188,7 @@ module.exports = function(robot) {
 
   robot.hear(/update links (\S*)/, async (msg) => {
     const branchName = msg.match[1];
-    msg.reply(`Updating lonks for branch ${branchName}...`);
+    msg.reply(`Updating links for branch ${branchName}...`);
 
     try {
       const message = await civ2.updatePRsDescriptions(branchName, msg.message.user.name);
@@ -201,6 +214,7 @@ module.exports = function(robot) {
     try {
       const targetVersion = await findVersion(releaseSource);
       messages.push(`Version on instance ${releaseSource} is ${targetVersion}.`);
+
       await Promise.all([
         civ2.updateInstance(DEMO.url, DEMO.name, targetVersion),
         civ2.replicatedPromotion(REPLICATED_STABLE_CHANNEL, targetVersion)
@@ -216,6 +230,10 @@ module.exports = function(robot) {
     }
   });
 
+  // -----------------------------------------------------------------------------
+  // ROUTER TRIGGERS
+  // -----------------------------------------------------------------------------
+
   robot.router.post('/hubot/civ2/github-webhook', async (req, res) => {
     const room = '#testing-ci';
     const data = req.body.payload != null ? JSON.parse(req.body.payload) : req.body;
@@ -227,7 +245,9 @@ module.exports = function(robot) {
 
     const { repo, branch, base, action, merged } = pr;
     if (action === 'closed' && merged === true) {
-      console.log('Merged PR', repo, branch);
+      if (NODE_ENV !== 'test') {
+        console.log('Merged PR', repo, branch);
+      }
 
       try {
         await civ2.deleteBranch(repo, branch);
@@ -236,6 +256,7 @@ module.exports = function(robot) {
       } catch (ex) {
         robot.messageRoom(room, `An error occured while deleting branch "${branch}" (${ex.message}).`);
         res.status(500).send('Error');
+        return;
       }
 
       try {
@@ -246,6 +267,7 @@ module.exports = function(robot) {
           `An error occured while triggering destruction of feature cluster "${branch}" (${ex.message}).`
         );
         res.status(500).send('Error');
+        return;
       }
 
       return res.send('OK');
@@ -259,10 +281,12 @@ module.exports = function(robot) {
       try {
         parsedPrs.set(branch, Date.now());
         await civ2.commentPtReferences(branch);
-        cleanParsedPrs();
+        cleanParsedPrs(parsedPrs);
         return res.send('OK');
       } catch (err) {
-        console.error(err);
+        if (NODE_ENV !== 'test') {
+          console.error(err);
+        }
         robot.messageRoom(room, `An error occured while looking for PT references in "${branch}": ${err}`);
         res.status(500).send('Error');
       }
@@ -270,12 +294,17 @@ module.exports = function(robot) {
   });
 
   robot.router.post('/hubot/civ2/create-pr', routes.createPr);
+
   robot.router.post('/hubot/civ2/announce-pr', routes.announcePRs);
 };
 
+// -----------------------------------------------------------------------------
+// HELPERS
+// -----------------------------------------------------------------------------
+
 const MAX_PRDATE = 1000 * 60 * 5;
 
-function cleanParsedPrs() {
+function cleanParsedPrs(parsedPrs) {
   const now = Date.now();
   for (const pr of parsedPrs.keys()) {
     const prDate = parsedPrs.get(pr);
@@ -286,12 +315,18 @@ function cleanParsedPrs() {
 }
 
 function respondToError(ex, msg) {
-  console.error(ex);
+  if (NODE_ENV !== 'test') {
+    console.error(ex);
+  }
+
   msg.reply(`Sorry, something went wrong: ${ex.message}`);
 }
 
 function replyError(ex, msg) {
-  console.error(ex);
+  if (NODE_ENV !== 'test') {
+    console.error(ex);
+  }
+
   msg.send(`An error occured (${ex.message}).`);
 }
 
