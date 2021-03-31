@@ -12,7 +12,6 @@
 //   update instance <instance domain> on <env> environment - update a specific instance (like EDF): update instance edf.stoic.cc on demo environment
 //   update instance <instance domain> on <env> environment to version <version>
 //   rollback stoic <version> - rollback to stoic <version>
-//   archive <repository> <branch>
 //   create feature instance <branch> - Creates a cluster on the specified branch
 //   destroy feature instance <branch> - Destroys the cluster of the specified branch
 //   branch status <branch name> - Displays information on branch and PRs
@@ -84,24 +83,6 @@ module.exports = function(robot) {
       msg.reply("I'm now refreshing myself, master.");
     } catch (ex) {
       respondToError(ex, msg);
-    }
-  });
-
-  robot.respond(/archive (\S*) (\S*)/, async (msg) => {
-    const repo = msg.match[1],
-      branch = msg.match[2];
-    console.log(`repo: ${repo}, branch:${branch}`);
-    try {
-      const body = await civ2.archive(repo, branch);
-      const bodyContent = JSON.parse(body);
-      if (bodyContent === 'ok') {
-        const message = `<https://github/com/sutoiku/${repo}/branches|Branch> ${branch} is now renamed archive/${branch}.`;
-        return msg.send(message);
-      }
-      const message = `Hum, something unexpected happened. You'd better <https://github.com/sutoiku/${repo}/branches|check on github>.`;
-      return msg.send(message);
-    } catch (ex) {
-      replyError(ex, msg);
     }
   });
 
