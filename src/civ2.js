@@ -77,15 +77,6 @@ module.exports = function(robot) {
     }
   });
 
-  robot.hear(/update yourself please/, async (msg) => {
-    try {
-      await civ2.updateBot();
-      msg.reply("I'm now refreshing myself, master.");
-    } catch (ex) {
-      respondToError(ex, msg);
-    }
-  });
-
   robot.hear(/create feature instance (\S*)/, async (msg) => {
     const branch = msg.match[1];
     try {
