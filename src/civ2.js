@@ -31,10 +31,10 @@ const civ2 = require('./lib/civ2-commands');
 const routes = require('./lib/routes');
 const gh = require('./lib/github');
 const aws = require('./lib/aws');
+const { log, error } = require('./lib/utils');
 
 const REPLICATED_STABLE_CHANNEL = 'Stable';
 const DEMO = { url: 'demo.stoic.cc', name: 'demo' };
-const { NODE_ENV } = process.env;
 const DEFAULT_ROOM = '#testing-ci';
 const MAX_PRDATE = 1000 * 60 * 5;
 
@@ -60,7 +60,7 @@ module.exports = function(robot) {
         const tagTxt = tag ? `tag ${tag}` : 'default tag';
         msg.reply(`The deployment of ${tagTxt} to ${target.trigger} is scheduled.`);
       } catch (ex) {
-        console.error(ex);
+        error(ex);
         msg.reply(`Sorry, something went wrong: ${ex.message}`);
       }
     });
@@ -244,10 +244,7 @@ module.exports = function(robot) {
 
   async function handlePrMerge(pr, res) {
     const { repo, branch, base } = pr;
-
-    if (NODE_ENV !== 'test') {
-      console.log('Merged PR', repo, branch);
-    }
+    log('Merged PR', repo, branch);
 
     if (
       (await tryDeleteBranch(repo, branch, base, robot, res)) &&
@@ -268,9 +265,7 @@ module.exports = function(robot) {
       cleanParsedPrs(parsedPrs);
       return res.send('OK');
     } catch (err) {
-      if (NODE_ENV !== 'test') {
-        console.error(err);
-      }
+      error(err);
       robot.messageRoom(DEFAULT_ROOM, `An error occured while looking for PT references in "${pr.branch}": ${err}`);
       res.status(500).send('Error');
     }
@@ -337,10 +332,7 @@ function cleanParsedPrs(parsedPrs) {
 }
 
 function respondToError(ex, msg, respondMethod) {
-  if (NODE_ENV !== 'test') {
-    console.error(ex);
-  }
-
+  error(ex);
   msg[respondMethod](`Sorry, something went wrong: ${ex.message}`);
 }
 
