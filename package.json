@@ -23,7 +23,7 @@
     "coffee-script": "~1.12",
     "debug": "^4.3.1",
     "github-api": "^3.4.0",
-    "jenkins": "^0.28.1",
+    "jenkins": "^0.20.1",
     "request": "^2.87.0",
     "request-promise": "^4.2.4"
   },
