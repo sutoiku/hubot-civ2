@@ -20,10 +20,9 @@ const GitHub = require('github-api');
 const { GITHUB_TOKEN } = process.env;
 const gh = new GitHub({ token: GITHUB_TOKEN });
 const Octokit = require('@octokit/rest');
-const helpers = require('./helpers');
 const aws = require('./aws');
 
-const pivotalTracker = initializePivotalTracker();
+const pivotalTracker = PivotalTracker.initialize();
 const GITHUB_ORG_NAME = 'sutoiku';
 const REPOS_MARKER = '# REPOS';
 
@@ -255,7 +254,7 @@ async function addCommentPrReview(repos, body) {
 }
 
 async function commentPtReferences(branchName) {
-  const ptId = getPtIdFromBranchName(branchName);
+  const ptId = PivotalTracker.getPtIdFromBranchName(branchName);
   if (!ptId || ('' + ptId).length < 8) {
     return null;
   }
@@ -322,7 +321,7 @@ async function getPrText(branchName, userName, repos) {
 }
 
 async function getPrTextWithPivotal(branchName, message, strRepos) {
-  const ptId = getPtIdFromBranchName(branchName);
+  const ptId = PivotalTracker.getPtIdFromBranchName(branchName);
   if (!ptId) {
     return { description: message };
   }
@@ -342,12 +341,12 @@ async function getPrTextWithPivotal(branchName, message, strRepos) {
 }
 
 function getPTLink(branchName, { markdown = false, slack = false } = {}) {
-  const ptId = getPtIdFromBranchName(branchName);
+  const ptId = PivotalTracker.getPtIdFromBranchName(branchName);
   if (!ptId) {
     return;
   }
 
-  const link = makePtLink(ptId);
+  const link = PivotalTracker.makePtLink(ptId);
   if (markdown) {
     return `[PT #${ptId}](${link})`;
   }
@@ -356,15 +355,6 @@ function getPTLink(branchName, { markdown = false, slack = false } = {}) {
     return `<${link}|PT #${ptId}>`;
   }
   return link;
-}
-
-function makePtLink(ptId) {
-  return `https://www.pivotaltracker.com/story/show/${ptId}`;
-}
-
-function getPtIdFromBranchName(branchName) {
-  const match = branchName.match(/\d+$/);
-  return match && match[0];
 }
 
 async function getReviews(repo, pr) {
@@ -379,15 +369,6 @@ function requestOnRepo(repo, method, pathname) {
   return new Promise(function(resolve, reject) {
     repo._request(method, pathname, null, (err, body) => (err ? reject(err) : resolve(body)));
   });
-}
-
-function initializePivotalTracker() {
-  const { PIVOTAL_TRACKER_TOKEN, PIVOTAL_TRACKER_PROJECT } = process.env;
-  if (!PIVOTAL_TRACKER_PROJECT || !PIVOTAL_TRACKER_TOKEN) {
-    return;
-  }
-
-  return new PivotalTracker(PIVOTAL_TRACKER_TOKEN, PIVOTAL_TRACKER_PROJECT);
 }
 
 async function getOctokit(userName) {
@@ -434,9 +415,8 @@ function replaceLinks(repos, links) {
 }
 
 function formatPTReferences(ptId, ptRefs) {
-  const messageParts = [
-    `Pardon the interruption, but there seems to be some TODOs attached to this PT [#${ptId}](${makePtLink(ptId)}). `
-  ];
+  const mdLink = `[#${ptId}](${PivotalTracker.makePtLink(ptId)})`;
+  const messageParts = [`Pardon the interruption, but there seems to be some TODOs attached to this PT ${mdLink}. `];
   for (const [repoName, refs] of Object.entries(ptRefs)) {
     const refList = refs.map(formatRefForList).join('\n');
     messageParts.push(`In \`${repoName}\` (${refs.length}):\n\n${refList}`);

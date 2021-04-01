@@ -1,12 +1,28 @@
-"use strict";
-const querystring = require("querystring");
-const Server = require("./pivotal-server");
-const debug = require("debug")("hubot:civ2:pivotal");
+'use strict';
+const querystring = require('querystring');
+const Server = require('./pivotal-server');
+const debug = require('debug')('hubot:civ2:pivotal');
 
 class PivotalTracker {
   constructor(token, project) {
     this.projectId = project;
     this.server = new Server(token);
+  }
+
+  static initialize() {
+    const { PIVOTAL_TRACKER_TOKEN, PIVOTAL_TRACKER_PROJECT } = process.env;
+    return PIVOTAL_TRACKER_PROJECT && PIVOTAL_TRACKER_TOKEN
+      ? new PivotalTracker(PIVOTAL_TRACKER_TOKEN, PIVOTAL_TRACKER_PROJECT)
+      : null;
+  }
+
+  static makePtLink(ptId) {
+    return `https://www.pivotaltracker.com/story/show/${ptId}`;
+  }
+
+  static getPtIdFromBranchName(branchName) {
+    const match = branchName.match(/\d+$/);
+    return match && match[0];
   }
 
   async getStory(id) {
@@ -31,25 +47,23 @@ class PivotalTracker {
     return this.server.put(`${root}/stories/${story.id}`, updates, options);
   }
   async updateStories(stories, updates, options) {
-    const ids = stories.map(story => story.id).join(",");
+    const ids = stories.map((story) => story.id).join(',');
     debug.enabled && debug(`updating stories ${ids}`);
 
-    const jobs = stories.map(story =>
-      this.updateStory(story, updates, options)
-    );
+    const jobs = stories.map((story) => this.updateStory(story, updates, options));
     return Promise.all(jobs);
   }
   async deliver(stories, options) {
-    const ids = stories.map(story => story.id).join(",");
+    const ids = stories.map((story) => story.id).join(',');
     debug.enabled && debug(`delivering stories ${ids}`);
 
-    return this.updateStories(stories, { current_state: "delivered" }, options);
+    return this.updateStories(stories, { current_state: 'delivered' }, options);
   }
   async addLabels(stories, labelsToAdd, options) {
-    const ids = stories.map(story => story.id).join(",");
+    const ids = stories.map((story) => story.id).join(',');
     debug.enabled && debug(`Setting labels ${labelsToAdd} on stories ${ids}`);
 
-    const newLabels = labelsToAdd.map(label => ({ name: label }));
+    const newLabels = labelsToAdd.map((label) => ({ name: label }));
     const failed = [];
     for (const story of stories) {
       const labels = (story.labels || []).concat(newLabels);
@@ -65,16 +79,9 @@ class PivotalTracker {
     }
   }
   changelog(stories, options = {}) {
-    debug.enabled &&
-      debug(`Generating changelog for ${stories.length} storie(s)`);
-    const markdown = generateChangelogs(
-      stories,
-      Object.assign({}, options, { markdown: true })
-    );
-    const txt = generateChangelogs(
-      stories,
-      Object.assign({}, options, { markdown: false })
-    );
+    debug.enabled && debug(`Generating changelog for ${stories.length} storie(s)`);
+    const markdown = generateChangelogs(stories, Object.assign({}, options, { markdown: true }));
+    const txt = generateChangelogs(stories, Object.assign({}, options, { markdown: false }));
     return { markdown, txt };
   }
 }
@@ -87,8 +94,8 @@ function generateChangelogs(stories, options = {}) {
       const formattedStory = formatStoryForChangelog(story, options);
       let hasRepo = false;
       for (const label of story.labels) {
-        if (label.name.startsWith("repo/")) {
-          const repo = label.name.replace("repo/", "");
+        if (label.name.startsWith('repo/')) {
+          const repo = label.name.replace('repo/', '');
           repos[repo] = repos[repo] || [];
           repos[repo].push(formattedStory);
           hasRepo = true;
@@ -102,17 +109,15 @@ function generateChangelogs(stories, options = {}) {
     { other: [] }
   );
   for (const repo of Object.keys(repos)) {
-    repos[repo] = repos[repo].join("\n");
+    repos[repo] = repos[repo].join('\n');
   }
-  const all = stories
-    .map(story => formatStoryForChangelog(story, options))
-    .join("\n");
+  const all = stories.map((story) => formatStoryForChangelog(story, options)).join('\n');
   return { repos, all };
 }
 
 function formatStoryForChangelog({ id, name, url, labels }, options) {
-  const strLabels = options.withRepositories ? getRepoLabelsList(labels) : "";
-  const reposList = strLabels !== "" ? ` (${strLabels})` : "";
+  const strLabels = options.withRepositories ? getRepoLabelsList(labels) : '';
+  const reposList = strLabels !== '' ? ` (${strLabels})` : '';
 
   if (options.markdown) {
     return ` * ${name} ([#${id}](${url}))${reposList}`;
@@ -122,9 +127,9 @@ function formatStoryForChangelog({ id, name, url, labels }, options) {
 
 function getRepoLabelsList(labels = []) {
   return labels
-    .filter(({ name }) => name.includes("repo/"))
-    .map(({ name }) => name.replace("repo/", ""))
-    .join(",");
+    .filter(({ name }) => name.includes('repo/'))
+    .map(({ name }) => name.replace('repo/', ''))
+    .join(',');
 }
 
 function getProjectRoot(id) {

@@ -47,6 +47,40 @@ describe('Pivotal', () => {
       nock.cleanAll();
     });
 
+    describe('Static methods', () => {
+      it('exposes an init method that returns null if the env variables are not present', () => {
+        const pivotalTracker = PivotalTracker.initialize();
+        expect(pivotalTracker).to.equal(null);
+      });
+
+      it('exposes an init method that returns an instance if the env variables are present', () => {
+        const { PIVOTAL_TRACKER_TOKEN, PIVOTAL_TRACKER_PROJECT } = process.env;
+        process.env.PIVOTAL_TRACKER_TOKEN = 'my-token';
+        process.env.PIVOTAL_TRACKER_PROJECT = 'my-project';
+
+        const pivotalTracker = PivotalTracker.initialize();
+
+        try {
+          expect(pivotalTracker).to.be.an.instanceof(PivotalTracker);
+          expect(pivotalTracker.projectId).to.equal('my-project');
+          expect(pivotalTracker.server.token).to.equal('my-token');
+        } finally {
+          process.env.PIVOTAL_TRACKER_TOKEN = PIVOTAL_TRACKER_TOKEN;
+          process.env.PIVOTAL_TRACKER_PROJECT = PIVOTAL_TRACKER_PROJECT;
+        }
+      });
+
+      it('exposes a link generation method', () => {
+        const id = '123456789';
+        expect(PivotalTracker.makePtLink(id)).to.equal(`https://www.pivotaltracker.com/story/show/${id}`);
+      });
+
+      it('exposes a PT id extraction method', () => {
+        const branchName = 'feature/pouet-123456789';
+        expect(PivotalTracker.getPtIdFromBranchName(branchName)).to.equal('123456789');
+      });
+    });
+
     describe('getStories', async () => {
       it('returns stories', async () => {
         pt = new PivotalTracker('token', 'project');
