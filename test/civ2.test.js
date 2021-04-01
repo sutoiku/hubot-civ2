@@ -2,6 +2,8 @@ const chai = require('chai');
 const sinon = require('sinon');
 const Robot = require('../src/civ2');
 const civ2Commands = require('../src/lib/civ2-commands');
+const PivotalTracker = require('../src/lib/pivotal-tracker');
+const { setVariables, resetVariables } = require('./utils');
 
 chai.use(require('sinon-chai'));
 
@@ -375,18 +377,59 @@ describe('hubot integration', () => {
             }
           };
 
-          it('should detect a merge payload', async () => {
-            const response = await hubotMock.httpCall('/hubot/civ2/github-webhook', DEFAULT_MERGE_PAYLOAD);
-            expect(civ2Commands.deleteBranch.calledOnceWithExactly('my-repo', 'feature/toto')).to.equal(true);
-            expect(civ2Commands.destroyFeatureCluster.calledOnceWithExactly('feature/toto')).to.equal(true);
-            expect(hubotMock._messageRoom).to.deep.equal([
-              {
-                channel: '#testing-ci',
-                msg:
-                  '<https://github/com/sutoiku/my-repo/branches|Branch feature/toto> of <https://github/com/sutoiku/my-repo|my-repo> was merged into master, I deleted it.'
-              }
-            ]);
-            expect(response).to.equal('OK');
+          it('should detect a merge payload', mergePayloadTestFactory());
+
+          const iconsByType = {
+            feature: ':gift: ',
+            bug: ':ladybug: ',
+            fix: ':ladybug: ',
+            chore: ':wrench: ',
+            poc: ':test_tube: ',
+            pipo: ''
+          };
+
+          for (const [kind, icon] of Object.entries(iconsByType)) {
+            it('should detect a feature merge payload', mergePayloadTestFactory(kind, icon));
+          }
+
+          describe('PT integration', () => {
+            let savedVariables = {};
+            let _originalPTMethod;
+
+            before(() => {
+              const vars = { PIVOTAL_TRACKER_TOKEN: 'my-token', PIVOTAL_TRACKER_PROJECT: 'my-project' };
+              savedVariables = setVariables(vars);
+              _originalPTMethod = PivotalTracker.prototype.getStory;
+              PivotalTracker.prototype.getStory = (id) => ({ id, name: 'test', description: 'test' });
+            });
+
+            after(() => {
+              resetVariables(savedVariables);
+              PivotalTracker.prototype.getStory = _originalPTMethod;
+            });
+
+            it('should enrich the announcement with PT information when possible', async () => {
+              const mergePayload = JSON.parse(JSON.stringify(DEFAULT_MERGE_PAYLOAD));
+              mergePayload.pull_request.head.ref += '-123456789';
+              const response = await hubotMock.httpCall('/hubot/civ2/github-webhook', mergePayload);
+              expect(civ2Commands.deleteBranch.calledOnceWithExactly('my-repo', 'feature/toto-123456789')).to.equal(
+                true
+              );
+              expect(civ2Commands.destroyFeatureCluster.calledOnceWithExactly('feature/toto-123456789')).to.equal(true);
+              expect(hubotMock._messageRoom).to.deep.equal([
+                {
+                  channel: '#testing-ci',
+                  msg:
+                    '<https://github/com/sutoiku/my-repo/branches|Branch feature/toto-123456789> of <https://github/com/sutoiku/my-repo|my-repo> was merged into master, I deleted it.'
+                },
+                {
+                  channel: '#release-candidates',
+                  msg:
+                    ':gift: Branch `feature/toto-123456789` was merged into `master`.\nIt implements PT <https://www.pivotaltracker.com/story/show/123456789|#123456789 (test)>.'
+                }
+              ]);
+              expect(response).to.equal('OK');
+            });
           });
 
           it('should report failures in the deletion phase', async () => {
@@ -422,6 +465,31 @@ describe('hubot integration', () => {
             expect(response).to.equal('Error');
             expect(hubotMock._statusCode).to.equal(500);
           });
+
+          // HELPERS
+          // -----------------------------------------------------------------------------
+
+          function mergePayloadTestFactory(kind = 'feature', icon = ':gift: ') {
+            return async () => {
+              const mergePayload = JSON.parse(JSON.stringify(DEFAULT_MERGE_PAYLOAD));
+              mergePayload.pull_request.head.ref = kind + '/toto';
+
+              const response = await hubotMock.httpCall('/hubot/civ2/github-webhook', mergePayload);
+              expect(civ2Commands.deleteBranch.calledOnceWithExactly('my-repo', kind + '/toto')).to.equal(true);
+              expect(civ2Commands.destroyFeatureCluster.calledOnceWithExactly(kind + '/toto')).to.equal(true);
+              expect(hubotMock._messageRoom).to.deep.equal([
+                {
+                  channel: '#testing-ci',
+                  msg: `<https://github/com/sutoiku/my-repo/branches|Branch ${kind}/toto> of <https://github/com/sutoiku/my-repo|my-repo> was merged into master, I deleted it.`
+                },
+                {
+                  channel: '#release-candidates',
+                  msg: `${icon}Branch \`${kind}/toto\` was merged into \`master\`.`
+                }
+              ]);
+              expect(response).to.equal('OK');
+            };
+          }
         });
 
         describe('Open', () => {
