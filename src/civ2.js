@@ -32,14 +32,19 @@ const routes = require('./lib/routes');
 const gh = require('./lib/github');
 const aws = require('./lib/aws');
 const { log, error } = require('./lib/utils');
+const PivotalTracker = require('./lib/pivotal-tracker');
 
 const REPLICATED_STABLE_CHANNEL = 'Stable';
 const DEMO = { url: 'demo.stoic.cc', name: 'demo' };
-const DEFAULT_ROOM = '#testing-ci';
+const CHANNELS = {
+  default: '#testing-ci',
+  releaseCandidates: '#release-candidates'
+};
 const MAX_PRDATE = 1000 * 60 * 5;
 
 module.exports = function(robot) {
   const parsedPrs = new Map();
+  const mergedPRs = new Map();
 
   // -----------------------------------------------------------------------------
   // MESSAGE TRIGGERS
@@ -248,7 +253,8 @@ module.exports = function(robot) {
 
     if (
       (await tryDeleteBranch(repo, branch, base, robot, res)) &&
-      (await tryDestryoFeatureCluster(branch, robot, res))
+      (await tryDestryoFeatureCluster(branch, robot, res)) &&
+      (await announcePrMerge(branch, robot, base, mergedPRs, res))
     ) {
       return res.send('OK');
     }
@@ -260,13 +266,14 @@ module.exports = function(robot) {
     }
 
     try {
-      parsedPrs.set(pr.branch, Date.now());
+      parsedPrs.set(pr.branch, { when: Date.now() });
       await civ2.commentPtReferences(pr.branch);
-      cleanParsedPrs(parsedPrs);
-      return res.send('OK');
+      cleanPrMap(parsedPrs);
+      res.send('OK');
+      return true;
     } catch (err) {
       error(err);
-      robot.messageRoom(DEFAULT_ROOM, `An error occured while looking for PT references in "${pr.branch}": ${err}`);
+      robot.messageRoom(CHANNELS.default, `An error occured while looking for PT references in "${pr.branch}": ${err}`);
       res.status(500).send('Error');
     }
   }
@@ -286,7 +293,7 @@ module.exports = function(robot) {
 };
 
 // -----------------------------------------------------------------------------
-// HELPERS
+// PR MERGE HANDLERS
 // -----------------------------------------------------------------------------
 
 function inferGHPrAction(pr) {
@@ -304,10 +311,68 @@ async function tryDeleteBranch(repo, branch, base, robot, res) {
   const deleteFn = async () => {
     await civ2.deleteBranch(repo, branch);
     const message = `<https://github/com/sutoiku/${repo}/branches|Branch ${branch}> of <https://github/com/sutoiku/${repo}|${repo}> was merged into ${base}, I deleted it.`;
-    robot.messageRoom(DEFAULT_ROOM, message);
+    robot.messageRoom(CHANNELS.default, message);
   };
 
   return tryAndNotifyErr(deleteFn, `deleting branch "${branch}"`, robot, res);
+}
+
+async function announcePrMerge(branch, robot, base, mergedPRs, res) {
+  if (mergedPRs.has(branch)) {
+    return;
+  }
+
+  const icon = inferIconFromBranchName(branch);
+  const text = [`${icon}Branch \`${branch}\` was merged into \`${base}\`.`];
+  try {
+    mergedPRs.set(branch, { when: Date.now() });
+
+    const ptDescription = await generateBranchPtDescription(branch);
+    if (ptDescription) {
+      text.push(ptDescription);
+    }
+
+    robot.messageRoom(CHANNELS.releaseCandidates, text.join('\n'));
+    cleanPrMap(mergedPRs);
+    return true;
+  } catch (err) {
+    error(err);
+    console.log(err);
+    robot.messageRoom(CHANNELS.default, `An error occured while announcing PR merge (${branch}) : ${err}`);
+    res.status(500).send('Error');
+  }
+}
+
+function inferIconFromBranchName(branch) {
+  const kind = branch.split('/')[0];
+  switch (kind) {
+    case 'feature':
+      return ':gift: ';
+    case 'fix':
+      return ':ladybug: ';
+    case 'bug':
+      return ':ladybug: ';
+    case 'chore':
+      return ':wrench: ';
+    case 'poc':
+      return ':test_tube: ';
+    default:
+      return '';
+  }
+}
+
+async function generateBranchPtDescription(branch) {
+  const pivotalTracker = PivotalTracker.initialize();
+  if (!pivotalTracker) {
+    return;
+  }
+
+  const ptId = PivotalTracker.getPtIdFromBranchName(branch);
+  if (ptId) {
+    const pt = await pivotalTracker.getStory(ptId);
+    const ptLink = PivotalTracker.makePtLink(ptId);
+    return `It implements PT <${ptLink}|#${pt.id} (${pt.name})>.`;
+  }
 }
 
 async function tryAndNotifyErr(func, errMsg, robot, res) {
@@ -315,18 +380,22 @@ async function tryAndNotifyErr(func, errMsg, robot, res) {
     await func();
     return true;
   } catch (ex) {
-    robot.messageRoom(DEFAULT_ROOM, `An error occured while ${errMsg} (${ex.message}).`);
+    robot.messageRoom(CHANNELS.default, `An error occured while ${errMsg} (${ex.message}).`);
     res.status(500).send('Error');
     return false;
   }
 }
 
-function cleanParsedPrs(parsedPrs) {
+// -----------------------------------------------------------------------------
+// HELPERS
+// -----------------------------------------------------------------------------
+
+function cleanPrMap(pullRequestsMap) {
   const now = Date.now();
-  for (const pr of parsedPrs.keys()) {
-    const prDate = parsedPrs.get(pr);
-    if (now - prDate > MAX_PRDATE) {
-      parsedPrs.delete(pr);
+  for (const pr of pullRequestsMap.keys()) {
+    const { when } = pullRequestsMap.get(pr);
+    if (now - when > MAX_PRDATE) {
+      pullRequestsMap.delete(pr);
     }
   }
 }
