@@ -2,14 +2,13 @@ const chai = require('chai');
 const sinon = require('sinon');
 const Robot = require('../src/civ2');
 const civ2Commands = require('../src/lib/civ2-commands');
-const gh = require('../src/lib/github');
 
 chai.use(require('sinon-chai'));
 
 const { expect } = chai;
 
-describe.only('hubot integration', () => {
-  describe('register', () => {
+describe('hubot integration', () => {
+  describe('Regisrations', () => {
     let robot;
 
     beforeEach(function() {
@@ -348,8 +347,7 @@ describe.only('hubot integration', () => {
           expect(civ2Commands[command].calledOnceWithExactly(...expectedArgs), errMsg).to.equal(true);
         }
 
-        const expectedReponse =
-          replyMethod === 'reply' ? 'Sorry, something went wrong: Oops' : 'An error occured (Oops).';
+        const expectedReponse = 'Sorry, something went wrong: Oops';
         const lastMessage = inspector.calls[inspector.calls.length - 1];
         expect(lastMessage).to.deep.equal({ method: replyMethod, args: [expectedReponse] });
       }
