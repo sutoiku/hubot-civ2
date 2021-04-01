@@ -1,8 +1,8 @@
 const crypto = require('crypto');
 const civ2 = require('./civ2-commands');
+const { log } = require('./utils');
 
 const SHARED_SIGNATURE = 'a]DzwfrtvHg4mxxgCjZQJGCXvH';
-const IS_TEST = process.env.NODE_ENV === 'test';
 
 exports.createPr = async function(req, res) {
   if (!req.body) {
@@ -60,10 +60,4 @@ function checkSignature(branchName, signature) {
   log(`Comparing hashes for "${branchName}": expected "${hash}", received "${signature}"`);
 
   return hash === signature;
-}
-
-function log(msg) {
-  if (!IS_TEST) {
-    console.log(msg);
-  }
 }
