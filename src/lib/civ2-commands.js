@@ -156,6 +156,7 @@ function buildJob(name, tag, additionalParameters) {
     }
     Object.assign(options.parameters, additionalParameters);
   }
+
   return jenkins.job.build(options);
 }
 

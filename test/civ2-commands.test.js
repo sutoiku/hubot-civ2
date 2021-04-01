@@ -9,7 +9,7 @@ describe('civ2', function() {
     process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
     process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tlda';
     civ2 = require('../src/lib/civ2-commands.js');
-    createApiHandlers(true, '/job/Deployment/job/ci-v1/build');
+    createApiHandlers('https', '/job/Deployment/job/ci-v1/build');
 
     civ2
       .deployV1()
@@ -24,7 +24,7 @@ describe('civ2', function() {
     process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
     process.env.HUBOT_JENKINS_URL = 'http://myjenkins.mydomain.tldx';
     civ2 = require('../src/lib/civ2-commands.js');
-    createApiHandlers(false);
+    createApiHandlers('http');
     nock(`http://${process.env.HUBOT_JENKINS_AUTH}@myjenkins.mydomain.tldx`)
       .post('/job/Deployment/job/ci-v1/build')
       .reply(200, 'ok');
@@ -42,7 +42,7 @@ describe('civ2', function() {
       process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
       process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tld';
       civ2 = require('../src/lib/civ2-commands.js');
-      createApiHandlers(true, '/job/Deployment/job/ci-v1/build');
+      createApiHandlers('https', '/job/Deployment/job/ci-v1/build');
 
       civ2
         .deployV1()
@@ -57,7 +57,7 @@ describe('civ2', function() {
       process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
       process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tld';
       civ2 = require('../src/lib/civ2-commands.js');
-      createApiHandlers(true, '/job/Deployment/job/ci-v1/buildWithParameters?tag=pouet');
+      createApiHandlers('https', '/job/Deployment/job/ci-v1/buildWithParameters?tag=pouet');
 
       civ2
         .deployV1('pouet')
@@ -74,7 +74,7 @@ describe('civ2', function() {
       process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
       process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tld';
       civ2 = require('../src/lib/civ2-commands.js');
-      createApiHandlers(true, '/job/Release/job/marcus-to-docker-cloud/build');
+      createApiHandlers('https', '/job/Release/job/marcus-to-docker-cloud/build');
 
       civ2
         .deployDocker()
@@ -89,7 +89,7 @@ describe('civ2', function() {
       process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
       process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tld';
       civ2 = require('../src/lib/civ2-commands.js');
-      createApiHandlers(true, '/job/Release/job/marcus-to-docker-cloud/buildWithParameters?tag=pouet');
+      createApiHandlers('https', '/job/Release/job/marcus-to-docker-cloud/buildWithParameters?tag=pouet');
 
       civ2
         .deployDocker('pouet')
@@ -106,7 +106,7 @@ describe('civ2', function() {
       process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
       process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tld';
       civ2 = require('../src/lib/civ2-commands.js');
-      createApiHandlers(true, '/job/Release/job/marcus-to-kubernetes/build');
+      createApiHandlers('https', '/job/Release/job/marcus-to-kubernetes/build');
 
       civ2
         .deployK8s()
@@ -121,7 +121,7 @@ describe('civ2', function() {
       process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
       process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tld';
       civ2 = require('../src/lib/civ2-commands.js');
-      createApiHandlers(true, '/job/Release/job/marcus-to-kubernetes/buildWithParameters?tag=pouet');
+      createApiHandlers('https', '/job/Release/job/marcus-to-kubernetes/buildWithParameters?tag=pouet');
 
       civ2
         .deployK8s('pouet')
@@ -138,7 +138,7 @@ describe('civ2', function() {
       process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
       process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tld';
       civ2 = require('../src/lib/civ2-commands.js');
-      createApiHandlers(true, '/job/Release/job/global-release/build');
+      createApiHandlers('https', '/job/Release/job/global-release/build');
 
       civ2
         .release()
@@ -152,7 +152,7 @@ describe('civ2', function() {
       process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
       process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tld';
       civ2 = require('../src/lib/civ2-commands.js');
-      createApiHandlers(true, '/job/Release/job/global-release/buildWithParameters?tag=pouet');
+      createApiHandlers('https', '/job/Release/job/global-release/buildWithParameters?tag=pouet');
 
       civ2
         .release('pouet')
@@ -169,7 +169,7 @@ describe('civ2', function() {
       process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
       process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tld';
       civ2 = require('../src/lib/civ2-commands.js');
-      createApiHandlers(true, '/job/Chore/job/feature-clusters/job/create/buildWithParameters?FEATURE=pouet');
+      createApiHandlers('https', '/job/Chore/job/feature-clusters/job/create/buildWithParameters?FEATURE=pouet');
 
       civ2
         .createFeatureCluster('pouet')
@@ -186,7 +186,7 @@ describe('civ2', function() {
       process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
       process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tld';
       civ2 = require('../src/lib/civ2-commands.js');
-      createApiHandlers(true, '/job/Chore/job/feature-clusters/job/destroy/buildWithParameters?FEATURE=pouet');
+      createApiHandlers('https', '/job/Chore/job/feature-clusters/job/destroy/buildWithParameters?FEATURE=pouet');
 
       civ2
         .destroyFeatureCluster('pouet')
@@ -223,16 +223,19 @@ describe('civ2', function() {
   });
 });
 
-function createApiHandlers(https, route) {
-  const prefix = https ? 'https://' : '';
+function createApiHandlers(protocol, route) {
+  const prefix = protocol === 'https' ? 'https://' : '';
+
   nock(`${prefix}${process.env.HUBOT_JENKINS_URL}`)
     .get('/crumbIssuer/api/json')
     .reply(200, {
       crumb: 'fb171d526b9cc9e25afe80b356e12cb7',
       crumbRequestField: '.crumb'
     });
+
   if (route) {
-    nock(`${prefix}${process.env.HUBOT_JENKINS_AUTH}@${process.env.HUBOT_JENKINS_URL}`)
+    const baseUrl = `${prefix}${process.env.HUBOT_JENKINS_AUTH}@${process.env.HUBOT_JENKINS_URL}`;
+    nock(baseUrl)
       .post(route)
       .reply(200, 'ok');
   }
