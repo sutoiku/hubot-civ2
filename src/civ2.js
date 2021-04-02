@@ -20,6 +20,8 @@
 //   merge pull requests <branch name> - Merge all PRs on the specified branch
 //   close pull requests <branch name> - Close all PRs on the specified branch
 //   delete branch <branch name> - Delete this branch on all repos. PRs must be closed first.
+//   my github token is <value> - Allow the bot to create PRs on your behalf.
+//   what is my github token? - check if the bot knows you already. Token will be truncated.
 //
 // Notes:
 //   <optional notes required for the script>
@@ -31,18 +33,18 @@ const civ2 = require('./lib/civ2-commands');
 const routes = require('./lib/routes');
 const gh = require('./lib/github');
 const aws = require('./lib/aws');
-const { log, error } = require('./lib/utils');
+const { log, logError } = require('./lib/utils');
 const PivotalTracker = require('./lib/pivotal-tracker');
 
 const REPLICATED_STABLE_CHANNEL = 'Stable';
 const DEMO = { url: 'demo.stoic.cc', name: 'demo' };
 const CHANNELS = {
   default: '#testing-ci',
-  releaseCandidates: '#release-candidates'
+  releaseCandidates: '#release-candidates',
 };
-const MAX_PRDATE = 1000 * 60 * 5;
+const MAX_PR_AGE_MS = 1000 * 60 * 5;
 
-module.exports = function(robot) {
+module.exports = function (robot) {
   const parsedPrs = new Map();
   const mergedPRs = new Map();
 
@@ -53,7 +55,7 @@ module.exports = function(robot) {
   const targets = [
     { trigger: 'civ1', method: civ2.deployV1 },
     { trigger: 'dockercloud', method: civ2.deployDocker },
-    { trigger: 'kubernetes', method: civ2.deployK8s }
+    { trigger: 'kubernetes', method: civ2.deployK8s },
   ];
 
   for (const target of targets) {
@@ -65,14 +67,14 @@ module.exports = function(robot) {
         const tagTxt = tag ? `tag ${tag}` : 'default tag';
         msg.reply(`The deployment of ${tagTxt} to ${target.trigger} is scheduled.`);
       } catch (ex) {
-        error(ex);
+        logError(ex);
         msg.reply(`Sorry, something went wrong: ${ex.message}`);
       }
     });
   }
 
   robot.hear(
-    /release stoic (\S*)/,
+    /release stoic (\S+)/i,
     responderFactory(async (msg) => {
       const tag = msg.match[1];
       await civ2.release(tag, true);
@@ -81,7 +83,7 @@ module.exports = function(robot) {
   );
 
   robot.hear(
-    /rollback stoic (\S*)/,
+    /rollback stoic (\S*)/i,
     responderFactory(async (msg) => {
       const tag = msg.match[1];
       await civ2.release(tag, false);
@@ -90,7 +92,7 @@ module.exports = function(robot) {
   );
 
   robot.hear(
-    /create feature instance (\S*)/,
+    /create feature instance (\S*)/i,
     responderFactory(async (msg) => {
       const branch = msg.match[1];
       await civ2.createFeatureCluster(branch);
@@ -99,7 +101,7 @@ module.exports = function(robot) {
   );
 
   robot.hear(
-    /destroy feature instance (\S*)/,
+    /destroy feature instance (\S*)/i,
     responderFactory(async (msg) => {
       const branch = msg.match[1];
       await civ2.destroyFeatureCluster(branch);
@@ -108,7 +110,7 @@ module.exports = function(robot) {
   );
 
   robot.hear(
-    /branch status (\S*)/,
+    /branch status (\S*)/i,
     responderFactory(async (msg) => {
       const branchName = msg.match[1];
       msg.reply(`Checking branch ${branchName}...`);
@@ -118,7 +120,7 @@ module.exports = function(robot) {
   );
 
   robot.hear(
-    /my github token is (\S*)/,
+    /my github token is (\S*)/i,
     responderFactory(async (msg) => {
       const user = msg.message.user.name;
       const key = msg.match[1];
@@ -128,7 +130,7 @@ module.exports = function(robot) {
   );
 
   robot.hear(
-    /what is my github token \?/,
+    /what is my github token\?/i,
     responderFactory(async (msg) => {
       const user = msg.message.user.name;
       const key = await aws.getUserKey(user, 'github');
@@ -138,7 +140,7 @@ module.exports = function(robot) {
   );
 
   robot.hear(
-    /create pull requests (\S*)( to (\S*))?/,
+    /create pull requests (\S*)( to (\S*))?/i,
     responderFactory(async (msg) => {
       const branchName = msg.match[1];
       const target = msg.match[3] || 'master';
@@ -151,7 +153,7 @@ module.exports = function(robot) {
   );
 
   robot.hear(
-    /merge pull requests (\S*)/,
+    /merge pull requests (\S*)/i,
     responderFactory(async (msg) => {
       const branchName = msg.match[1];
       msg.reply(`Merging PRs for branch ${branchName}...`);
@@ -161,7 +163,7 @@ module.exports = function(robot) {
   );
 
   robot.hear(
-    /close pull requests (\S*)/,
+    /close pull requests (\S*)/i,
     responderFactory(async (msg) => {
       const branchName = msg.match[1];
       msg.reply(`Closing PRs for branch ${branchName}...`);
@@ -171,7 +173,7 @@ module.exports = function(robot) {
   );
 
   robot.hear(
-    /delete branch (\S*)/,
+    /delete branch (\S*)/i,
     responderFactory(async (msg) => {
       const branchName = msg.match[1];
       msg.reply(`Deleting branch ${branchName}...`);
@@ -181,7 +183,7 @@ module.exports = function(robot) {
   );
 
   robot.hear(
-    /update links (\S*)/,
+    /update links (\S*)/i,
     responderFactory(async (msg) => {
       const branchName = msg.match[1];
       msg.reply(`Updating links for branch ${branchName}...`);
@@ -191,7 +193,7 @@ module.exports = function(robot) {
   );
 
   robot.hear(
-    /update instance (\S*)( on (\S*) environment)?( to version (\S*))?/,
+    /update instance (\S*)( on (\S*) environment)?( to version (\S*))?/i,
     responderFactory(async (msg) => {
       const [, instance, , env, , version] = msg.match;
       const targetVersion = await civ2.updateInstance(instance, env, version);
@@ -200,7 +202,7 @@ module.exports = function(robot) {
   );
 
   robot.hear(
-    /Publicly release (\S*)/,
+    /publicly release (\S*)/i,
     responderFactory(async (msg) => {
       const releaseSource = msg.match[1];
       const messages = [];
@@ -209,7 +211,7 @@ module.exports = function(robot) {
 
       await Promise.all([
         civ2.updateInstance(DEMO.url, DEMO.name, targetVersion),
-        civ2.replicatedPromotion(REPLICATED_STABLE_CHANNEL, targetVersion)
+        civ2.replicatedPromotion(REPLICATED_STABLE_CHANNEL, targetVersion),
       ]);
 
       messages.push(
@@ -253,7 +255,7 @@ module.exports = function(robot) {
 
     if (
       (await tryDeleteBranch(repo, branch, base, robot, res)) &&
-      (await tryDestryoFeatureCluster(branch, robot, res)) &&
+      (await tryDestroyFeatureCluster(branch, robot, res)) &&
       (await announcePrMerge(branch, robot, base, mergedPRs, res))
     ) {
       return res.send('OK');
@@ -272,7 +274,7 @@ module.exports = function(robot) {
       res.send('OK');
       return true;
     } catch (err) {
-      error(err);
+      logError(err);
       robot.messageRoom(CHANNELS.default, `An error occured while looking for PT references in "${pr.branch}": ${err}`);
       res.status(500).send('Error');
     }
@@ -301,7 +303,7 @@ function inferGHPrAction(pr) {
   return action === 'closed' && merged === true ? 'merged' : action;
 }
 
-async function tryDestryoFeatureCluster(branch, robot, res) {
+async function tryDestroyFeatureCluster(branch, robot, res) {
   const destroyFn = () => civ2.destroyFeatureCluster(branch);
   const destroyErrMsg = `triggering destruction of feature cluster "${branch}"`;
   return tryAndNotifyErr(destroyFn, destroyErrMsg, robot, res);
@@ -336,7 +338,7 @@ async function announcePrMerge(branch, robot, base, mergedPRs, res) {
     cleanPrMap(mergedPRs);
     return true;
   } catch (err) {
-    error(err);
+    logError(err);
     console.log(err);
     robot.messageRoom(CHANNELS.default, `An error occured while announcing PR merge (${branch}) : ${err}`);
     res.status(500).send('Error');
@@ -349,7 +351,6 @@ function inferIconFromBranchName(branch) {
     case 'feature':
       return ':gift: ';
     case 'fix':
-      return ':ladybug: ';
     case 'bug':
       return ':ladybug: ';
     case 'chore':
@@ -394,14 +395,14 @@ function cleanPrMap(pullRequestsMap) {
   const now = Date.now();
   for (const pr of pullRequestsMap.keys()) {
     const { when } = pullRequestsMap.get(pr);
-    if (now - when > MAX_PRDATE) {
+    if (now - when > MAX_PR_AGE_MS) {
       pullRequestsMap.delete(pr);
     }
   }
 }
 
 function respondToError(ex, msg, respondMethod) {
-  error(ex);
+  logError(ex);
   msg[respondMethod](`Sorry, something went wrong: ${ex.message}`);
 }
 

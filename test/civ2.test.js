@@ -13,91 +13,96 @@ describe('hubot integration', () => {
   describe('Regisrations', () => {
     let robot;
 
-    beforeEach(function() {
+    beforeEach(function () {
       robot = {
         respond: sinon.spy(),
         hear: sinon.spy(),
-        router: { post: sinon.spy() }
+        router: { post: sinon.spy() },
       };
 
       new Robot(robot);
     });
 
-    it('registers 17 listeners', function() {
+    it('registers 17 listeners', function () {
       expect(robot.hear).to.have.callCount(17);
     });
-    it('registers 0 responder', function() {
+
+    it('registers 0 responder', function () {
       expect(robot.respond).to.have.callCount(0);
     });
 
-    it('registers 3 webhooks', function() {
+    it('registers 3 webhooks', function () {
       expect(robot.router.post).to.have.callCount(3);
     });
 
-    it('registers a civ1 listener', function() {
+    it('registers a civ1 listener', function () {
       expect(robot.hear.getCall(0).args[0].toString()).to.equal('/deploy to civ1 ?(S*)/');
     });
-    it('registers a dockercloud listener', function() {
+
+    it('registers a dockercloud listener', function () {
       expect(robot.hear.getCall(1).args[0].toString()).to.equal('/deploy to dockercloud ?(S*)/');
     });
-    it('registers a kubernetes listener', function() {
+
+    it('registers a kubernetes listener', function () {
       expect(robot.hear.getCall(2).args[0].toString()).to.equal('/deploy to kubernetes ?(S*)/');
     });
-    it('registers a release listener', function() {
-      expect(robot.hear.getCall(3).args[0].toString()).to.equal('/release stoic (\\S*)/');
-    });
-    it('registers a rollback listener', function() {
-      expect(robot.hear.getCall(4).args[0].toString()).to.equal('/rollback stoic (\\S*)/');
+
+    it('registers a release listener', function () {
+      expect(robot.hear.getCall(3).args[0].toString()).to.equal('/release stoic (\\S+)/i');
     });
 
-    it('registers a cluster creation listener', function() {
-      expect(robot.hear.getCall(5).args[0].toString()).to.equal('/create feature instance (\\S*)/');
+    it('registers a rollback listener', function () {
+      expect(robot.hear.getCall(4).args[0].toString()).to.equal('/rollback stoic (\\S*)/i');
     });
 
-    it('registers a cluster destruction listener', function() {
-      expect(robot.hear.getCall(6).args[0].toString()).to.equal('/destroy feature instance (\\S*)/');
+    it('registers a cluster creation listener', function () {
+      expect(robot.hear.getCall(5).args[0].toString()).to.equal('/create feature instance (\\S*)/i');
+    });
+
+    it('registers a cluster destruction listener', function () {
+      expect(robot.hear.getCall(6).args[0].toString()).to.equal('/destroy feature instance (\\S*)/i');
     });
 
     it('registers a branch status information command', () => {
-      expect(robot.hear.getCall(7).args[0].toString()).to.equal(/branch status (\S*)/.toString());
+      expect(robot.hear.getCall(7).args[0].toString()).to.equal(/branch status (\S*)/i.toString());
     });
 
     it('registers a GH token set command', () => {
-      expect(robot.hear.getCall(8).args[0].toString()).to.equal(/my github token is (\S*)/.toString());
+      expect(robot.hear.getCall(8).args[0].toString()).to.equal(/my github token is (\S*)/i.toString());
     });
 
     it('registers a GH token check command', () => {
-      expect(robot.hear.getCall(9).args[0].toString()).to.equal(/what is my github token \?/.toString());
+      expect(robot.hear.getCall(9).args[0].toString()).to.equal(/what is my github token\?/i.toString());
     });
 
     it('registers a PR creation command', () => {
-      expect(robot.hear.getCall(10).args[0].toString()).to.equal(/create pull requests (\S*)( to (\S*))?/.toString());
+      expect(robot.hear.getCall(10).args[0].toString()).to.equal(/create pull requests (\S*)( to (\S*))?/i.toString());
     });
 
     it('registers a PR merge command', () => {
-      expect(robot.hear.getCall(11).args[0].toString()).to.equal(/merge pull requests (\S*)/.toString());
+      expect(robot.hear.getCall(11).args[0].toString()).to.equal(/merge pull requests (\S*)/i.toString());
     });
 
     it('registers a PR close command', () => {
-      expect(robot.hear.getCall(12).args[0].toString()).to.equal(/close pull requests (\S*)/.toString());
+      expect(robot.hear.getCall(12).args[0].toString()).to.equal(/close pull requests (\S*)/i.toString());
     });
 
     it('registers a branch deletion command', () => {
-      expect(robot.hear.getCall(13).args[0].toString()).to.equal(/delete branch (\S*)/.toString());
+      expect(robot.hear.getCall(13).args[0].toString()).to.equal(/delete branch (\S*)/i.toString());
     });
 
     it('registers a link update command', () => {
-      expect(robot.hear.getCall(14).args[0].toString()).to.equal(/update links (\S*)/.toString());
+      expect(robot.hear.getCall(14).args[0].toString()).to.equal(/update links (\S*)/i.toString());
     });
 
     it('registers a instance update command', () => {
       expect(robot.hear.getCall(15).args[0].toString()).to.equal(
-        /update instance (\S*)( on (\S*) environment)?( to version (\S*))?/.toString()
+        /update instance (\S*)( on (\S*) environment)?( to version (\S*))?/i.toString()
       );
     });
 
-    it('registers a public release listener', function() {
-      expect(robot.hear.getCall(16).args[0].toString()).to.equal('/Publicly release (\\S*)/');
+    it('registers a public release listener', function () {
+      expect(robot.hear.getCall(16).args[0].toString()).to.equal('/publicly release (\\S*)/i');
     });
   });
 
@@ -177,7 +182,7 @@ describe('hubot integration', () => {
             [{ command: 'getBranchInformation', expectedArgs: ['toto/pipo', 'John Doe'] }],
             [
               { method: 'reply', args: ['Checking branch toto/pipo...'] },
-              { method: 'reply', args: ['SPY:getBranchInformation'] }
+              { method: 'reply', args: ['SPY:getBranchInformation'] },
             ]
           ));
       });
@@ -188,11 +193,11 @@ describe('hubot integration', () => {
             'create pull requests toto/pipo',
             [
               { command: 'createPRs', expectedArgs: ['toto/pipo', 'John Doe', 'master', { draft: true }] },
-              { command: 'getBranchInformation', expectedArgs: ['toto/pipo', 'John Doe'] }
+              { command: 'getBranchInformation', expectedArgs: ['toto/pipo', 'John Doe'] },
             ],
             [
               { method: 'reply', args: ['Creating PRs for branch toto/pipo...'] },
-              { args: ['SPY:createPRs\nSPY:getBranchInformation'], method: 'reply' }
+              { args: ['SPY:createPRs\nSPY:getBranchInformation'], method: 'reply' },
             ]
           ));
 
@@ -201,17 +206,17 @@ describe('hubot integration', () => {
             'create pull requests toto/pipo to my-base',
             [
               { command: 'createPRs', expectedArgs: ['toto/pipo', 'John Doe', 'my-base', { draft: true }] },
-              { command: 'getBranchInformation', expectedArgs: ['toto/pipo', 'John Doe'] }
+              { command: 'getBranchInformation', expectedArgs: ['toto/pipo', 'John Doe'] },
             ],
             [
               { method: 'reply', args: ['Creating PRs for branch toto/pipo...'] },
-              { args: ['SPY:createPRs\nSPY:getBranchInformation'], method: 'reply' }
+              { args: ['SPY:createPRs\nSPY:getBranchInformation'], method: 'reply' },
             ]
           ));
 
         it('should notify in an error occurs', async () =>
           expectCiv2Error('create pull requests toto/pipo', [
-            { command: 'createPRs', expectedArgs: ['toto/pipo', 'John Doe', 'master', { draft: true }] }
+            { command: 'createPRs', expectedArgs: ['toto/pipo', 'John Doe', 'master', { draft: true }] },
           ]));
       });
 
@@ -222,13 +227,13 @@ describe('hubot integration', () => {
             [{ command: 'mergePRs', expectedArgs: ['toto/pipo', 'John Doe'] }],
             [
               { method: 'reply', args: ['Merging PRs for branch toto/pipo...'] },
-              { args: ['SPY:mergePRs'], method: 'reply' }
+              { args: ['SPY:mergePRs'], method: 'reply' },
             ]
           ));
 
         it('should notify in an error occurs', async () =>
           expectCiv2Error('merge pull requests toto/pipo', [
-            { command: 'mergePRs', expectedArgs: ['toto/pipo', 'John Doe'] }
+            { command: 'mergePRs', expectedArgs: ['toto/pipo', 'John Doe'] },
           ]));
       });
 
@@ -239,13 +244,13 @@ describe('hubot integration', () => {
             [{ command: 'closePRs', expectedArgs: ['toto/pipo', 'John Doe'] }],
             [
               { method: 'reply', args: ['Closing PRs for branch toto/pipo...'] },
-              { args: ['SPY:closePRs'], method: 'reply' }
+              { args: ['SPY:closePRs'], method: 'reply' },
             ]
           ));
 
         it('should notify in an error occurs', async () =>
           expectCiv2Error('close pull requests toto/pipo', [
-            { command: 'closePRs', expectedArgs: ['toto/pipo', 'John Doe'] }
+            { command: 'closePRs', expectedArgs: ['toto/pipo', 'John Doe'] },
           ]));
       });
 
@@ -256,13 +261,13 @@ describe('hubot integration', () => {
             [{ command: 'deleteBranches', expectedArgs: ['toto/pipo', 'John Doe'] }],
             [
               { method: 'reply', args: ['Deleting branch toto/pipo...'] },
-              { args: ['SPY:deleteBranches'], method: 'reply' }
+              { args: ['SPY:deleteBranches'], method: 'reply' },
             ]
           ));
 
         it('should notify in an error occurs', async () =>
           expectCiv2Error('delete branch toto/pipo', [
-            { command: 'deleteBranches', expectedArgs: ['toto/pipo', 'John Doe'] }
+            { command: 'deleteBranches', expectedArgs: ['toto/pipo', 'John Doe'] },
           ]));
       });
 
@@ -273,13 +278,13 @@ describe('hubot integration', () => {
             [{ command: 'updatePRsDescriptions', expectedArgs: ['toto/pipo', 'John Doe'] }],
             [
               { method: 'reply', args: ['Updating links for branch toto/pipo...'] },
-              { args: ['SPY:updatePRsDescriptions'], method: 'reply' }
+              { args: ['SPY:updatePRsDescriptions'], method: 'reply' },
             ]
           ));
 
         it('should notify in an error occurs', async () =>
           expectCiv2Error('update links toto/pipo', [
-            { command: 'updatePRsDescriptions', expectedArgs: ['toto/pipo', 'John Doe'] }
+            { command: 'updatePRsDescriptions', expectedArgs: ['toto/pipo', 'John Doe'] },
           ]));
       });
 
@@ -291,8 +296,8 @@ describe('hubot integration', () => {
             [
               {
                 method: 'reply',
-                args: ['Instance <pouet|pouet> on "undefined" is updating to version "SPY:updateInstance"']
-              }
+                args: ['Instance <pouet|pouet> on "undefined" is updating to version "SPY:updateInstance"'],
+              },
             ]
           ));
 
@@ -303,8 +308,8 @@ describe('hubot integration', () => {
             [
               {
                 method: 'reply',
-                args: ['Instance <pouet|pouet> on "shiny" is updating to version "SPY:updateInstance"']
-              }
+                args: ['Instance <pouet|pouet> on "shiny" is updating to version "SPY:updateInstance"'],
+              },
             ]
           ));
 
@@ -315,14 +320,14 @@ describe('hubot integration', () => {
             [
               {
                 method: 'reply',
-                args: ['Instance <pouet|pouet> on "shiny" is updating to version "SPY:updateInstance"']
-              }
+                args: ['Instance <pouet|pouet> on "shiny" is updating to version "SPY:updateInstance"'],
+              },
             ]
           ));
 
         it('should notify in an error occurs', async () =>
           expectCiv2Error('update instance pouet on shiny environment to version ultimate', [
-            { command: 'updateInstance', expectedArgs: ['pouet', 'shiny', 'ultimate'] }
+            { command: 'updateInstance', expectedArgs: ['pouet', 'shiny', 'ultimate'] },
           ]));
       });
 
@@ -373,8 +378,8 @@ describe('hubot integration', () => {
             pull_request: {
               head: { ref: 'feature/toto', repo: { name: 'my-repo' } },
               base: { ref: 'master' },
-              merged: true
-            }
+              merged: true,
+            },
           };
 
           it('should detect a merge payload', mergePayloadTestFactory());
@@ -385,7 +390,7 @@ describe('hubot integration', () => {
             fix: ':ladybug: ',
             chore: ':wrench: ',
             poc: ':test_tube: ',
-            pipo: ''
+            pipo: '',
           };
 
           for (const [kind, icon] of Object.entries(iconsByType)) {
@@ -420,13 +425,13 @@ describe('hubot integration', () => {
                 {
                   channel: '#testing-ci',
                   msg:
-                    '<https://github/com/sutoiku/my-repo/branches|Branch feature/toto-123456789> of <https://github/com/sutoiku/my-repo|my-repo> was merged into master, I deleted it.'
+                    '<https://github/com/sutoiku/my-repo/branches|Branch feature/toto-123456789> of <https://github/com/sutoiku/my-repo|my-repo> was merged into master, I deleted it.',
                 },
                 {
                   channel: '#release-candidates',
                   msg:
-                    ':gift: Branch `feature/toto-123456789` was merged into `master`.\nIt implements PT <https://www.pivotaltracker.com/story/show/123456789|#123456789 (test)>.'
-                }
+                    ':gift: Branch `feature/toto-123456789` was merged into `master`.\nIt implements PT <https://www.pivotaltracker.com/story/show/123456789|#123456789 (test)>.',
+                },
               ]);
               expect(response).to.equal('OK');
             });
@@ -439,8 +444,8 @@ describe('hubot integration', () => {
             expect(hubotMock._messageRoom).to.deep.equal([
               {
                 msg: 'An error occured while deleting branch "feature/toto" (Oops).',
-                channel: '#testing-ci'
-              }
+                channel: '#testing-ci',
+              },
             ]);
             expect(response).to.equal('Error');
             expect(hubotMock._statusCode).to.equal(500);
@@ -455,12 +460,12 @@ describe('hubot integration', () => {
               {
                 channel: '#testing-ci',
                 msg:
-                  '<https://github/com/sutoiku/my-repo/branches|Branch feature/toto> of <https://github/com/sutoiku/my-repo|my-repo> was merged into master, I deleted it.'
+                  '<https://github/com/sutoiku/my-repo/branches|Branch feature/toto> of <https://github/com/sutoiku/my-repo|my-repo> was merged into master, I deleted it.',
               },
               {
                 channel: '#testing-ci',
-                msg: 'An error occured while triggering destruction of feature cluster "feature/toto" (Oops).'
-              }
+                msg: 'An error occured while triggering destruction of feature cluster "feature/toto" (Oops).',
+              },
             ]);
             expect(response).to.equal('Error');
             expect(hubotMock._statusCode).to.equal(500);
@@ -480,12 +485,12 @@ describe('hubot integration', () => {
               expect(hubotMock._messageRoom).to.deep.equal([
                 {
                   channel: '#testing-ci',
-                  msg: `<https://github/com/sutoiku/my-repo/branches|Branch ${kind}/toto> of <https://github/com/sutoiku/my-repo|my-repo> was merged into master, I deleted it.`
+                  msg: `<https://github/com/sutoiku/my-repo/branches|Branch ${kind}/toto> of <https://github/com/sutoiku/my-repo|my-repo> was merged into master, I deleted it.`,
                 },
                 {
                   channel: '#release-candidates',
-                  msg: `${icon}Branch \`${kind}/toto\` was merged into \`master\`.`
-                }
+                  msg: `${icon}Branch \`${kind}/toto\` was merged into \`master\`.`,
+                },
               ]);
               expect(response).to.equal('OK');
             };
@@ -499,8 +504,8 @@ describe('hubot integration', () => {
             pull_request: {
               head: { ref: 'feature/toto', repo: { name: 'my-repo' } },
               base: { ref: 'master' },
-              merged: false
-            }
+              merged: false,
+            },
           };
 
           it('should detect an open payload', async () => {
@@ -517,8 +522,8 @@ describe('hubot integration', () => {
             expect(hubotMock._messageRoom).to.deep.equal([
               {
                 msg: 'An error occured while looking for PT references in "feature/toto": Error: Oops',
-                channel: '#testing-ci'
-              }
+                channel: '#testing-ci',
+              },
             ]);
             expect(response).to.equal('Error');
             expect(hubotMock._statusCode).to.equal(500);
@@ -612,7 +617,7 @@ class HubotMock {
     this._router = {
       post: this._post.bind(this),
       status: this._status.bind(this),
-      send: this._send.bind(this)
+      send: this._send.bind(this),
     };
 
     this.reset();
@@ -681,7 +686,7 @@ class HubotMock {
       { body: { payload: JSON.stringify(payload) } },
       {
         send: this._router.send.bind(this),
-        status: this._router.status.bind(this)
+        status: this._router.status.bind(this),
       }
     );
     return this._response;
