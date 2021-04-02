@@ -12,7 +12,7 @@ const REPOS = [
   'core.stoic',
   'marcus',
   'pictura',
-  'stoic-io'
+  'stoic-io',
 ];
 
 const PivotalTracker = require('./pivotal-tracker');
@@ -38,7 +38,7 @@ module.exports = {
   updatePRsDescriptions,
   deleteBranches,
   announcePRs,
-  commentPtReferences
+  commentPtReferences,
 };
 
 function findMissingPrs(branchInformation) {
@@ -157,7 +157,7 @@ async function createPr(repoName, branchName, targetBase, prText, octokit, optio
     title: branchName,
     head: branchName,
     base: targetBase,
-    body: prText.description
+    body: prText.description,
   });
 
   if (prText.name) {
@@ -245,7 +245,7 @@ async function addCommentPrReview(repos, body) {
         repo: repoName,
         pull_number: repo.pr.number,
         body,
-        event: 'COMMENT'
+        event: 'COMMENT',
       })
     );
   }
@@ -330,9 +330,7 @@ async function getPrTextWithPivotal(branchName, message, strRepos) {
     const pt = await pivotalTracker.getStory(ptId);
     const ptLink = getPTLink(branchName);
 
-    const description = `${message}\n\n# PT\n\n${ptLink}\n\n# Description\n\n${
-      pt.description
-    }\n\n${REPOS_MARKER}\n\n${strRepos}`;
+    const description = `${message}\n\n# PT\n\n${ptLink}\n\n# Description\n\n${pt.description}\n\n${REPOS_MARKER}\n\n${strRepos}`;
     return { description, name: pt.name };
   } catch (err) {
     console.error(`Error fetching PT #${ptId}: ${err.message}`);
@@ -366,7 +364,7 @@ async function getReviews(repo, pr) {
 }
 
 function requestOnRepo(repo, method, pathname) {
-  return new Promise(function(resolve, reject) {
+  return new Promise(function (resolve, reject) {
     repo._request(method, pathname, null, (err, body) => (err ? reject(err) : resolve(body)));
   });
 }
@@ -384,9 +382,7 @@ function generateLinkDescription(repos) {
       continue;
     }
 
-    const jenkinsLink = `[![Build Status](https://ci-v2.stoic.com/buildStatus/icon?job=Modules%2F${repoName}%2FPR-${
-      pr.number
-    })](https://ci-v2.stoic.com/job/Modules/job/${repoName}/view/change-requests/job/PR-${pr.number}/)`;
+    const jenkinsLink = `[![Build Status](https://ci-v2.stoic.com/buildStatus/icon?job=Modules%2F${repoName}%2FPR-${pr.number})](https://ci-v2.stoic.com/job/Modules/job/${repoName}/view/change-requests/job/PR-${pr.number}/)`;
     linkDdesc.push(` * ${jenkinsLink} [${repoName} PR #${pr.number}](${pr.html_url})`);
   }
 
