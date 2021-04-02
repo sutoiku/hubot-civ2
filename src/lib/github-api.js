@@ -19,7 +19,7 @@ const PivotalTracker = require('./pivotal-tracker');
 const GitHub = require('github-api');
 const { GITHUB_TOKEN } = process.env;
 const gh = new GitHub({ token: GITHUB_TOKEN });
-const Octokit = require('@octokit/rest');
+const { Octokit } = require('@octokit/rest');
 const aws = require('./aws');
 
 const pivotalTracker = PivotalTracker.initialize();
@@ -371,7 +371,7 @@ function requestOnRepo(repo, method, pathname) {
 
 async function getOctokit(userName) {
   const key = userName ? await aws.getUserKey(userName, 'github') : null;
-  return Octokit({ auth: key || GITHUB_TOKEN, previews: ['shadow-cat'] });
+  return new Octokit({ auth: key || GITHUB_TOKEN, previews: ['shadow-cat'] });
 }
 
 function generateLinkDescription(repos) {
