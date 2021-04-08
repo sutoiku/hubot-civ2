@@ -17,7 +17,7 @@ describe('hubot integration', () => {
       robot = {
         respond: sinon.spy(),
         hear: sinon.spy(),
-        router: { post: sinon.spy() },
+        router: { post: sinon.spy(), get: sinon.spy() },
       };
 
       new Robot(robot);
@@ -31,8 +31,9 @@ describe('hubot integration', () => {
       expect(robot.respond).to.have.callCount(0);
     });
 
-    it('should register 3 webhooks', () => {
+    it('should register 3 POST webhooks, 1 GET', () => {
       expect(robot.router.post).to.have.callCount(3);
+      expect(robot.router.get).to.have.callCount(1);
     });
 
     it('should register a civ1 listener', () => {
@@ -553,6 +554,17 @@ describe('hubot integration', () => {
           });
         });
       });
+
+      describe('Health', () => {
+        it('should declare a health route', () => {
+          expect(hubotMock._routes[3].route).to.equal('/hubot/health');
+        });
+
+        it('should respond OK', async () => {
+          const response = await hubotMock.httpCall('/hubot/health', {});
+          expect(response).to.equal('OK');
+        });
+      });
     });
   });
 });
@@ -623,6 +635,7 @@ class MessageMock {
 class HubotMock {
   constructor() {
     this._router = {
+      get: this._get.bind(this),
       post: this._post.bind(this),
       status: this._status.bind(this),
       send: this._send.bind(this),
@@ -657,6 +670,10 @@ class HubotMock {
   }
 
   _post(route, callback) {
+    this._routes.push({ route, callback });
+  }
+
+  _get(route, callback) {
     this._routes.push({ route, callback });
   }
 

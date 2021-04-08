@@ -246,6 +246,10 @@ module.exports = function (robot) {
 
   robot.router.post('/hubot/civ2/announce-pr', routes.announcePRs);
 
+  robot.router.get('/hubot/health', (req, res) => {
+    res.send('OK');
+  });
+
   // WBEHOOK HANDLERS
   // -----------------------------------------------------------------------------
 
