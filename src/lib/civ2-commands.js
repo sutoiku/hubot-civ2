@@ -311,8 +311,7 @@ function getPRStatus({ pr }) {
 
 function getHelmReleaseName(domain) {
   const [subdomain] = domain.split('.');
-
-  return subdomain === 'demo' || subdomain === 'dev' ? 'stoic' : 'stoic-' + subdomain;
+  return 'stoic-' + subdomain;
 }
 
 function getEnv() {
