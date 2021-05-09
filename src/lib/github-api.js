@@ -16,6 +16,7 @@ const REPOS = [
 ];
 
 const PivotalTracker = require('./pivotal-tracker');
+const Jira = require('./jira');
 const GitHub = require('github-api');
 const { GITHUB_TOKEN } = process.env;
 const gh = new GitHub({ token: GITHUB_TOKEN });
@@ -23,6 +24,7 @@ const { Octokit } = require('@octokit/rest');
 const aws = require('./aws');
 
 const pivotalTracker = PivotalTracker.initialize();
+const jira = Jira.initialize();
 const GITHUB_ORG_NAME = 'sutoiku';
 const REPOS_MARKER = '# REPOS';
 
@@ -259,7 +261,12 @@ async function addCommentPrReview(repos, body) {
 }
 
 async function commentPtReferences(branchName) {
-  const ptId = PivotalTracker.getPtIdFromBranchName(branchName);
+  const pivotalTracker = PivotalTracker.initialize();
+  if (pivotalTracker) {
+    return null;
+  }
+
+  const ptId = pivotalTracker.getPtIdFromBranchName(branchName);
   if (!ptId || ('' + ptId).length < 8) {
     return null;
   }
@@ -316,47 +323,102 @@ async function getPrText(branchName, userName, repos) {
   const key = userName ? await aws.getUserKey(userName, 'github') : null;
   const message = !!key ? '' : `This pull request has been created by ${userName} via the bot.`;
 
-  if (!pivotalTracker) {
+  if (pivotalTracker || jira) {
+    return getPrTextWithTracker(branchName, message, strRepos);
+  } else {
     const ptLink = getPTLink(branchName);
     const description = `${message}\n\n# PT\n${ptLink}\n\n${REPOS_MARKER}\n\n${strRepos}`;
     return { description };
   }
-
-  return getPrTextWithPivotal(branchName, message, strRepos);
 }
 
-async function getPrTextWithPivotal(branchName, message, strRepos) {
-  const ptId = PivotalTracker.getPtIdFromBranchName(branchName);
+async function getPrTextWithTracker(branchName, message, strRepos) {
+  const descriptions = {};
+
+  descriptions.pt = pivotalTracker ? await getPrTextWithPivotal(branchName) : '';
+  descriptions.jira = jira ? await getPrTextWithJira(branchName) : '';
+
+  if (descriptions.pt || descriptions.jira) {
+    const name = descriptions.jira.name || descriptiona.pt.name;
+    const description = [descriptions.jira.description, descriptions.pt.description].join('\n\n');
+    return { name, description };
+  }
+  return null;
+}
+
+async function getPrTextWithJira(branchName) {
+  const issueId = await jira.getIdFromBranchName(branchName);
+
+  if (!issueId) {
+    return null;
+  }
+
+  try {
+    const story = await jira.getStory(issueId);
+    const jiraLink = await getJiraLink(branchName);
+    const description = `# JIRA\n\n${jiraLink}\n\n# Description\n\n${story.description}`;
+    return { description, name: story.name };
+  } catch (err) {
+    console.error(`Error fetching JIRA #${issueId}: ${err.message}`);
+    return null;
+  }
+}
+
+async function getPrTextWithPivotal(branchName) {
+  const ptId = pivotalTracker.getPtIdFromBranchName(branchName);
   if (!ptId) {
-    return { description: message };
+    return null;
   }
 
   try {
     const pt = await pivotalTracker.getStory(ptId);
     const ptLink = getPTLink(branchName);
 
-    const description = `${message}\n\n# PT\n\n${ptLink}\n\n# Description\n\n${pt.description}\n\n${REPOS_MARKER}\n\n${strRepos}`;
+    const description = `# PT\n\n${ptLink}\n\n# Description\n\n${pt.description}`;
     return { description, name: pt.name };
   } catch (err) {
     console.error(`Error fetching PT #${ptId}: ${err.message}`);
-    return { description: message };
+    return null;
   }
 }
 
-function getPTLink(branchName, { markdown = false, slack = false } = {}) {
-  const ptId = PivotalTracker.getPtIdFromBranchName(branchName);
+function getPTLink(branchName, options) {
+  if (!pivotalTracker) {
+    return '';
+  }
+
+  const ptId = pivotalTracker.getPtIdFromBranchName(branchName);
   if (!ptId) {
     return;
   }
 
-  const link = PivotalTracker.makePtLink(ptId);
+  const link = pivotalTracker.makePtLink(ptId);
+  return formatLink(`PT #${ptId}`, link, options);
+}
+
+async function getJiraLink(branchName, options) {
+  if (!jira) {
+    return '';
+  }
+
+  const issueId = await jira.getIdFromBranchName(branchName);
+  if (!issueId) {
+    return;
+  }
+
+  const link = jira.makeLink(issueId);
+  return formatLink(`Jira #${issueId}`, link, options);
+}
+
+function formatLink(text, link, { markdown = false, slack = false } = {}) {
   if (markdown) {
-    return `[PT #${ptId}](${link})`;
+    return `[${text}](${link})`;
   }
 
   if (slack) {
-    return `<${link}|PT #${ptId}>`;
+    return `<${link}|${text}>`;
   }
+
   return link;
 }
 
@@ -435,3 +497,10 @@ function formatRefForList({ html_url, name }) {
 async function sleep(duration) {
   return new Promise((resolve) => setTimeout(resolve, duration));
 }
+
+async function test() {
+  const text = await getPrText('chore/helm3-STOIC-30-177942206', 'yan', ['fermat,kyu']);
+  console.log(text);
+}
+
+test();

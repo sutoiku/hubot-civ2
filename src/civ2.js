@@ -35,6 +35,7 @@ const gh = require('./lib/github');
 const aws = require('./lib/aws');
 const { log, logError } = require('./lib/utils');
 const PivotalTracker = require('./lib/pivotal-tracker');
+const Jira = require('./lib/jira');
 
 const REPLICATED_STABLE_CHANNEL = 'Stable';
 const DEMO = { url: 'demo.stoic.cc', name: 'demo' };
@@ -337,6 +338,10 @@ async function announcePrMerge(branch, robot, base, mergedPRs, res) {
     if (ptDescription) {
       text.push(ptDescription);
     }
+    const jiraDescription = await generateBranchJiraDescription(branch);
+    if (jiraDescription) {
+      text.push(jiraDescription);
+    }
 
     robot.messageRoom(CHANNELS.releaseCandidates, text.join('\n'));
     cleanPrMap(mergedPRs);
@@ -372,11 +377,25 @@ async function generateBranchPtDescription(branch) {
     return;
   }
 
-  const ptId = PivotalTracker.getPtIdFromBranchName(branch);
+  const ptId = pivotalTracker.getPtIdFromBranchName(branch);
   if (ptId) {
     const pt = await pivotalTracker.getStory(ptId);
-    const ptLink = PivotalTracker.makePtLink(ptId);
+    const ptLink = pivotalTracker.makePtLink(ptId);
     return `It implements PT <${ptLink}|#${pt.id} (${pt.name})>.`;
+  }
+}
+
+async function generateBranchJiraDescription(branch) {
+  const jira = Jira.initialize();
+  if (!jira) {
+    return;
+  }
+
+  const issueId =await jira.getIdFromBranchName(branch);
+  if (issueId) {
+    const issue = await jira.getStory(issueId);
+    const issueLink = jira.makeLink(issueId);
+    return `It implements Jira issue <${issueLink}|#${issue.id} (${issue.name})>.`;
   }
 }
 
