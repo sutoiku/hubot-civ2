@@ -16,11 +16,11 @@ class PivotalTracker {
       : null;
   }
 
-  static makePtLink(ptId) {
+  makePtLink(ptId) {
     return `https://www.pivotaltracker.com/story/show/${ptId}`;
   }
 
-  static getPtIdFromBranchName(branchName) {
+  getPtIdFromBranchName(branchName) {
     const match = branchName.match(/\d+$/);
     return match && match[0];
   }
