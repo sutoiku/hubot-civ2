@@ -20,7 +20,7 @@ exports.deployK8s = function (tag) {
 exports.updateInstance = async function (receivedDomain, env, requestedVersion) {
   const domain = stripHttp(receivedDomain);
   const version = requestedVersion || (await exports.getLatestVersion());
-  const instanceName = 'k8s-' + domain;
+  const instanceName = `k8s-${env}.stoic.cc`;
   const namespace = domain.replace(/\./g, '-');
   const release = getHelmReleaseName(domain);
 
