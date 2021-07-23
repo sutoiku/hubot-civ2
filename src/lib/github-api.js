@@ -95,7 +95,12 @@ async function mergePRs(branchName, userName) {
     }
 
     merged.push(repoName);
-    return octokit.pulls.merge({ owner: GITHUB_ORG_NAME, repo: repoName, pull_number: pr.number });
+    return octokit.pulls.merge({
+      owner: GITHUB_ORG_NAME,
+      repo: repoName,
+      pull_number: pr.number,
+      merge_method: 'squash',
+    });
   });
 
   await Promise.all(mergePromises);
