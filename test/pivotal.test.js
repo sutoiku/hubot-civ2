@@ -13,7 +13,7 @@ const testStories = {
       name: '1',
       url: 'http://url1',
       labels: [{ name: 'repo/repo1' }, { name: 'repo/repo2' }],
-      current_state: 'started'
+      current_state: 'started',
     },
     { id: 2, name: '2', url: 'http://url2', labels: [], current_state: 'finished' },
     {
@@ -21,11 +21,11 @@ const testStories = {
       name: '3',
       url: 'http://url3',
       labels: [{ name: 'repo/repo1' }, { name: 'blah' }],
-      current_state: 'delivered'
-    }
+      current_state: 'delivered',
+    },
   ],
   'filter-current_state=finished': [{ id: 2, name: '2', labels: [], current_state: 'finished' }],
-  onelabel: [{ id: 2, name: '2', labels: [{ id: 1, name: 'hello' }], current_state: 'finished' }]
+  onelabel: [{ id: 2, name: '2', labels: [{ id: 1, name: 'hello' }], current_state: 'finished' }],
 };
 
 describe('Pivotal', () => {
@@ -34,11 +34,11 @@ describe('Pivotal', () => {
     beforeEach(() => {
       nock('https://www.pivotaltracker.com', {
         reqheaders: {
-          'X-TrackerToken': 'token'
-        }
+          'X-TrackerToken': 'token',
+        },
       })
         .get(/\/services\/v5\/projects\/(project)\/stories(.*)/)
-        .reply(200, function(path) {
+        .reply(200, function (path) {
           const filter = path.split('?')[1];
           return testStories['filter-' + filter];
         });
@@ -71,13 +71,15 @@ describe('Pivotal', () => {
       });
 
       it('exposes a link generation method', () => {
+        const pivotalTracker = PivotalTracker.initialize();
         const id = '123456789';
-        expect(PivotalTracker.makePtLink(id)).to.equal(`https://www.pivotaltracker.com/story/show/${id}`);
+        expect(pivotalTracker.makePtLink(id)).to.equal(`https://www.pivotaltracker.com/story/show/${id}`);
       });
 
       it('exposes a PT id extraction method', () => {
+        const pivotalTracker = PivotalTracker.initialize();
         const branchName = 'feature/pouet-123456789';
-        expect(PivotalTracker.getPtIdFromBranchName(branchName)).to.equal('123456789');
+        expect(pivotalTracker.getPtIdFromBranchName(branchName)).to.equal('123456789');
       });
     });
 
@@ -99,10 +101,10 @@ describe('Pivotal', () => {
         nock('https://www.pivotaltracker.com', {
           reqheaders: {
             'X-TrackerToken': 'token',
-            'Content-Type': 'application/json'
-          }
+            'Content-Type': 'application/json',
+          },
         })
-          .put('/services/v5/projects/project/stories/2', function(body) {
+          .put('/services/v5/projects/project/stories/2', function (body) {
             _body = body;
             return true;
           })
@@ -117,8 +119,8 @@ describe('Pivotal', () => {
         let nbcalls = 0;
         nock('https://www.pivotaltracker.com', {
           reqheaders: {
-            'X-TrackerToken': 'token'
-          }
+            'X-TrackerToken': 'token',
+          },
         })
           .put('/services/v5/projects/project/stories/1')
           .reply(200, () => {
@@ -148,10 +150,10 @@ describe('Pivotal', () => {
         nock('https://www.pivotaltracker.com', {
           reqheaders: {
             'X-TrackerToken': 'token',
-            'Content-Type': 'application/json'
-          }
+            'Content-Type': 'application/json',
+          },
         })
-          .put('/services/v5/projects/project/stories/2', function(body) {
+          .put('/services/v5/projects/project/stories/2', function (body) {
             _body = body;
             return true;
           })
@@ -162,15 +164,15 @@ describe('Pivotal', () => {
           labels: [
             {
               id: 1,
-              name: 'hello'
+              name: 'hello',
             },
             {
-              name: 'new1'
+              name: 'new1',
             },
             {
-              name: 'new2'
-            }
-          ]
+              name: 'new2',
+            },
+          ],
         });
       });
     });
