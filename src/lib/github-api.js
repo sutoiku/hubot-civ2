@@ -262,44 +262,43 @@ async function addCommentPrReview(repos, body) {
 }
 
 async function commentPtReferences(branchName) {
-  const pivotalTracker = PivotalTracker.initialize();
-  if (pivotalTracker) {
+  if (!jira) {
     return null;
   }
 
-  const ptId = pivotalTracker.getPtIdFromBranchName(branchName);
-  if (!ptId || ('' + ptId).length < 8) {
+  const issueId = jira.getIdFromBranchName(branchName);
+  if (!issueId) {
     return null;
   }
 
-  const ptReferences = await searchPTInAllRepos(ptId);
-  if (!ptReferences) {
+  const issueReferences = await searchIssueInAllRepos(issueId);
+  if (!issueReferences) {
     return null;
   }
 
-  const message = formatPTReferences(ptId, ptReferences);
+  const message = formatJiraReferences(issueId, issueReferences);
   const repos = await getAllReposBranchInformation(branchName);
   // Let's add the comment in only 1 of the repos, no spam.
   const firstRepoName = Object.keys(repos)[0];
   return addCommentPrReview({ [firstRepoName]: repos[firstRepoName] }, message);
 }
 
-async function searchPTInAllRepos(ptId, retryCount = 0) {
+async function searchIssueInAllRepos(ptId, retryCount = 0) {
   try {
-    return await doSearchPTInAllRepos(ptId);
+    return await doSearchIssueInAllRepos(ptId);
   } catch (err) {
     if (err.message.includes('API rate limit exceeded') && retryCount < 5) {
       await sleep(ONE_MINUTE);
-      return searchPTInAllRepos(ptId, retryCount + 1);
+      return searchIssueInAllRepos(ptId, retryCount + 1);
     }
 
     throw err;
   }
 }
 
-async function doSearchPTInAllRepos(ptId) {
+async function doSearchIssueInAllRepos(issueId) {
   const octokit = await getOctokit();
-  const q = `${ptId}+org:${GITHUB_ORG_NAME}`;
+  const q = `${issueId}+org:${GITHUB_ORG_NAME}`;
 
   const { data } = await octokit.search.code({ q });
   if (!data || data.total_count === 0) {
@@ -478,9 +477,9 @@ function replaceLinks(repos, links) {
   return replaced;
 }
 
-function formatPTReferences(ptId, ptRefs) {
-  const mdLink = `[#${ptId}](${PivotalTracker.makePtLink(ptId)})`;
-  const messageParts = [`Pardon the interruption, but there seems to be some TODOs attached to this PT ${mdLink}. `];
+function formatJiraReferences(issueId, ptRefs) {
+  const mdLink = `[#${issueId}](${jira.makeLink(issueId)})`;
+  const messageParts = [`Pardon the interruption, but there seems to be some TODOs attached to this issue ${mdLink}. `];
   for (const [repoName, refs] of Object.entries(ptRefs)) {
     const refList = refs.map(formatRefForList).join('\n');
     messageParts.push(`In \`${repoName}\` (${refs.length}):\n\n${refList}`);
