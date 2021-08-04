@@ -13,6 +13,7 @@ const REPOS = [
   'marcus',
   'pictura',
   'stoic-io',
+  'team',
 ];
 
 const PivotalTracker = require('./pivotal-tracker');
@@ -497,10 +498,3 @@ function formatRefForList({ html_url, name }) {
 async function sleep(duration) {
   return new Promise((resolve) => setTimeout(resolve, duration));
 }
-
-async function test() {
-  const text = await getPrText('chore/helm3-STOIC-30-177942206', 'yan', ['fermat,kyu']);
-  console.log(text);
-}
-
-test();
