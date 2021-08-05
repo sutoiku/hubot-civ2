@@ -266,7 +266,7 @@ async function commentPtReferences(branchName) {
     return null;
   }
 
-  const issueId = jira.getIdFromBranchName(branchName);
+  const issueId = await jira.getIdFromBranchName(branchName);
   if (!issueId) {
     return null;
   }
