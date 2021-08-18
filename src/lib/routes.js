@@ -16,10 +16,14 @@ exports.createPr = async function(req, res) {
     return;
   }
 
-  const message = dryrun
-    ? `Request OK, would create PRs on branch "${branch}", author "${author}", target "${target}"`
-    : await civ2.createPRs(branch, author, target, { draft });
-  res.send(message);
+  try {
+    const message = dryrun
+      ? `Request OK, would create PRs on branch "${branch}", author "${author}", target "${target}"`
+      : await civ2.createPRs(branch, author, target, { draft });
+    res.send(message);
+  } catch (err) {
+    res.status(400).send(err.message + '\n' + err.stack);
+  }
 };
 
 exports.announcePRs = async function(req, res) {

@@ -73,25 +73,20 @@ exports.getBranchInformation = async function (branchName, userName) {
 };
 
 exports.createPRs = async function (branchName, userName, targetBase, options) {
-  try {
-    const created = await ghApi.createMissingPrs(branchName, userName, targetBase, options);
+  const created = await ghApi.createMissingPrs(branchName, userName, targetBase, options);
 
-    const strCreated = getPrlist(created, false);
-    const strError = getPrlist(created, true);
-    const message = [];
-    if (strCreated) {
-      message.push(`Pull Request created on ${strCreated}.`);
-    }
-
-    if (strError) {
-      message.push(`Error on ${strCreated}.`);
-    }
-
-    return message.join();
-  } catch (error) {
-    console.error(error);
-    return `Error: ${error.message}`;
+  const strCreated = getPrlist(created, false);
+  const strError = getPrlist(created, true);
+  const message = [];
+  if (strCreated) {
+    message.push(`Pull Request created on ${strCreated}.`);
   }
+
+  if (strError) {
+    message.push(`Error on ${strCreated}.`);
+  }
+
+  return message.join();
 };
 
 exports.mergePRs = async function (branchName, userName) {

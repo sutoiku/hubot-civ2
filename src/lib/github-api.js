@@ -319,21 +319,10 @@ async function getPrText(branchName, userName, repos) {
   const key = userName ? await aws.getUserKey(userName, 'github') : null;
   const message = !!key ? '' : `This pull request has been created by ${userName} via the bot.`;
 
-  const trackerDesc = jira && getPrTextWithTracker(branchName, message, strRepos);
+  const trackerDesc =  jira && await getPrTextWithJira(branchName);
   return trackerDesc || { description: `${message}\n\n# JIRA\nTODO\n\n${REPOS_MARKER}\n\n${strRepos}` };
 }
 
-async function getPrTextWithTracker(branchName, message, strRepos) {
-  const descriptions = {};
-
-  descriptions.jira = jira ? await getPrTextWithJira(branchName) : '';
-
-  if (descriptions.jira) {
-    const { name, description } = descriptions.jira;
-    return { name, description };
-  }
-  return null;
-}
 
 async function getPrTextWithJira(branchName) {
   const issueId = await jira.getIdFromBranchName(branchName);
