@@ -44,8 +44,7 @@ module.exports = {
 function findMissingPrs(branchInformation) {
   const prsToCreate = [];
   for (const [repoName, data] of Object.entries(branchInformation)) {
-    const hasPr = !!data.pr;
-    if (!hasPr) {
+    if (!data.pr) {
       prsToCreate.push(repoName);
     }
   }
@@ -320,11 +319,8 @@ async function getPrText(branchName, userName, repos) {
   const key = userName ? await aws.getUserKey(userName, 'github') : null;
   const message = !!key ? '' : `This pull request has been created by ${userName} via the bot.`;
 
-  if (jira) {
-    return getPrTextWithTracker(branchName, message, strRepos);
-  } else {
-    return { description: `${message}\n\n# JIRA\nTODO\n\n${REPOS_MARKER}\n\n${strRepos}` };
-  }
+  const trackerDesc = jira && getPrTextWithTracker(branchName, message, strRepos);
+  return trackerDesc || { description: `${message}\n\n# JIRA\nTODO\n\n${REPOS_MARKER}\n\n${strRepos}` };
 }
 
 async function getPrTextWithTracker(branchName, message, strRepos) {
@@ -332,9 +328,8 @@ async function getPrTextWithTracker(branchName, message, strRepos) {
 
   descriptions.jira = jira ? await getPrTextWithJira(branchName) : '';
 
-  if (descriptions.pt || descriptions.jira) {
-    const name = descriptions.jira.name || descriptiona.pt.name;
-    const description = [descriptions.jira.description, descriptions.pt.description].join('\n\n');
+  if (descriptions.jira) {
+    const { name, description } = descriptions.jira;
     return { name, description };
   }
   return null;
@@ -353,7 +348,7 @@ async function getPrTextWithJira(branchName) {
     const description = `# JIRA\n\n${jiraLink}\n\n# Description\n\n${story.description}`;
     return { description, name: story.name };
   } catch (err) {
-    console.error(`Error fetching JIRA #${issueId}: ${err.message}`);
+    console.error(`Error fetching JIRA #${issueId}`, err);
     return null;
   }
 }
@@ -439,10 +434,10 @@ function replaceLinks(repos, links) {
   return replaced;
 }
 
-function formatJiraReferences(issueId, ptRefs) {
+function formatJiraReferences(issueId, refs) {
   const mdLink = `[#${issueId}](${jira.makeLink(issueId)})`;
   const messageParts = [`Pardon the interruption, but there seems to be some TODOs attached to this issue ${mdLink}. `];
-  for (const [repoName, refs] of Object.entries(ptRefs)) {
+  for (const [repoName, refs] of Object.entries(refs)) {
     const refList = refs.map(formatRefForList).join('\n');
     messageParts.push(`In \`${repoName}\` (${refs.length}):\n\n${refList}`);
   }
