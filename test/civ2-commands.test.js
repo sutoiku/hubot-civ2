@@ -1,210 +1,133 @@
 const chai = require('chai');
 const nock = require('nock');
+const civ2 = require('../src/lib/civ2-commands.js');
+
 const { expect } = chai;
 
 describe('civ2', function() {
-  let civ2;
-
-  it('Adds https protocol if missing', (done) => {
+  it('Adds https protocol if missing', async () => {
     process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
     process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tlda';
-    civ2 = require('../src/lib/civ2-commands.js');
     createApiHandlers('https', '/job/Deployment/job/ci-v1/build');
 
-    civ2
-      .deployV1()
-      .then((response) => {
-        expect(response.body.toString()).to.equal('ok');
-        done();
-      })
-      .catch(done);
+    const response = await civ2.deployV1();
+    expect(response.body.toString()).to.equal('ok');
   });
 
-  it('keeps existing protocol if present', (done) => {
+  it('keeps existing protocol if present', async () => {
     process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
     process.env.HUBOT_JENKINS_URL = 'http://myjenkins.mydomain.tldx';
-    civ2 = require('../src/lib/civ2-commands.js');
+
     createApiHandlers('http');
     nock(`http://${process.env.HUBOT_JENKINS_AUTH}@myjenkins.mydomain.tldx`)
       .post('/job/Deployment/job/ci-v1/build')
       .reply(200, 'ok');
-    civ2
-      .deployV1()
-      .then((response) => {
-        expect(response.body.toString()).to.equal('ok');
-        done();
-      })
-      .catch(done);
+    const response = await civ2.deployV1();
+    expect(response.body.toString()).to.equal('ok');
   });
 
   describe('Task civ1', () => {
-    it('calls the right Jenkins job', (done) => {
+    it('calls the right Jenkins job', async () => {
       process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
       process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tld';
-      civ2 = require('../src/lib/civ2-commands.js');
       createApiHandlers('https', '/job/Deployment/job/ci-v1/build');
 
-      civ2
-        .deployV1()
-        .then((response) => {
-          expect(response.body.toString()).to.equal('ok');
-          done();
-        })
-        .catch(done);
+      const response = await civ2.deployV1();
+      expect(response.body.toString()).to.equal('ok');
     });
 
-    it('passes tag if present', (done) => {
+    it('passes tag if present', async () => {
       process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
       process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tld';
-      civ2 = require('../src/lib/civ2-commands.js');
-      createApiHandlers('https', '/job/Deployment/job/ci-v1/buildWithParameters?tag=pouet');
+      createApiHandlers('https', '/job/Deployment/job/ci-v1/buildWithParameters', 'tag=pouet');
 
-      civ2
-        .deployV1('pouet')
-        .then((response) => {
-          expect(response.body.toString()).to.equal('ok');
-          done();
-        })
-        .catch(done);
+      const response = await civ2.deployV1('pouet');
+      expect(response.body.toString()).to.equal('ok');
     });
   });
 
   describe('Task Docker', () => {
-    it('calls the right Jenkins job', (done) => {
+    it('calls the right Jenkins job', async () => {
       process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
       process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tld';
-      civ2 = require('../src/lib/civ2-commands.js');
       createApiHandlers('https', '/job/Release/job/marcus-to-docker-cloud/build');
 
-      civ2
-        .deployDocker()
-        .then((response) => {
-          expect(response.body.toString()).to.equal('ok');
-          done();
-        })
-        .catch(done);
+      const response = await civ2.deployDocker();
+      expect(response.body.toString()).to.equal('ok');
     });
 
-    it('passes tag if present', (done) => {
+    it('passes tag if present', async () => {
       process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
       process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tld';
-      civ2 = require('../src/lib/civ2-commands.js');
-      createApiHandlers('https', '/job/Release/job/marcus-to-docker-cloud/buildWithParameters?tag=pouet');
+      createApiHandlers('https', '/job/Release/job/marcus-to-docker-cloud/buildWithParameters', 'tag=pouet');
 
-      civ2
-        .deployDocker('pouet')
-        .then((response) => {
-          expect(response.body.toString()).to.equal('ok');
-          done();
-        })
-        .catch(done);
+      const response = await civ2.deployDocker('pouet');
+      expect(response.body.toString()).to.equal('ok');
     });
   });
 
   describe('Task Kubernetes', () => {
-    it('calls the right Jenkins job', (done) => {
+    it('calls the right Jenkins job', async () => {
       process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
       process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tld';
-      civ2 = require('../src/lib/civ2-commands.js');
       createApiHandlers('https', '/job/Release/job/marcus-to-kubernetes/build');
 
-      civ2
-        .deployK8s()
-        .then((response) => {
-          expect(response.body.toString()).to.equal('ok');
-          done();
-        })
-        .catch(done);
+      const response = await civ2.deployK8s();
+      expect(response.body.toString()).to.equal('ok');
     });
 
-    it('passes tag if present', (done) => {
+    it('passes tag if present', async () => {
       process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
       process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tld';
-      civ2 = require('../src/lib/civ2-commands.js');
-      createApiHandlers('https', '/job/Release/job/marcus-to-kubernetes/buildWithParameters?tag=pouet');
+      createApiHandlers('https', '/job/Release/job/marcus-to-kubernetes/buildWithParameters', 'tag=pouet');
 
-      civ2
-        .deployK8s('pouet')
-        .then((response) => {
-          expect(response.body.toString()).to.equal('ok');
-          done();
-        })
-        .catch(done);
+      const response = await civ2.deployK8s('pouet');
+      expect(response.body.toString()).to.equal('ok');
     });
   });
 
   describe('Task release', () => {
-    it('calls the right Jenkins job', (done) => {
+    it('calls the right Jenkins job', async () => {
       process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
       process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tld';
-      civ2 = require('../src/lib/civ2-commands.js');
       createApiHandlers('https', '/job/Release/job/global-release/build');
 
-      civ2
-        .release()
-        .then((response) => {
-          expect(response.body.toString()).to.equal('ok');
-          done();
-        })
-        .catch(done);
+      const response = await civ2.release();
+      expect(response.body.toString()).to.equal('ok');
     });
-    it('passes tag if present', (done) => {
+
+    it('passes tag if present', async () => {
       process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
       process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tld';
-      civ2 = require('../src/lib/civ2-commands.js');
-      createApiHandlers('https', '/job/Release/job/global-release/buildWithParameters?tag=pouet');
+      createApiHandlers('https', '/job/Release/job/global-release/buildWithParameters', 'tag=pouet');
 
-      civ2
-        .release('pouet')
-        .then((response) => {
-          expect(response.body.toString()).to.equal('ok');
-          done();
-        })
-        .catch(done);
+      const response = await civ2.release('pouet');
+      expect(response.body.toString()).to.equal('ok');
     });
   });
 
   describe('Task create instance cluster', () => {
-    it('passes the right tag', (done) => {
+    it('passes the right tag', async () => {
       process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
       process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tld';
-      civ2 = require('../src/lib/civ2-commands.js');
-      createApiHandlers('https', '/job/Chore/job/feature-clusters/job/create/buildWithParameters?FEATURE=pouet');
+      createApiHandlers('https', '/job/Chore/job/feature-clusters/job/create/buildWithParameters', 'FEATURE=pouet');
 
-      civ2
-        .createFeatureCluster('pouet')
-        .then((response) => {
-          expect(response.body.toString()).to.equal('ok');
-          done();
-        })
-        .catch(done);
+      const response = await civ2.createFeatureCluster('pouet');
+      expect(response.body.toString()).to.equal('ok');
     });
   });
 
   describe('Task destroy instance cluster', () => {
-    it('passes the right tag', (done) => {
+    it('passes the right tag', async () => {
       process.env.HUBOT_JENKINS_AUTH = 'bla:toto';
       process.env.HUBOT_JENKINS_URL = 'myjenkins.mydomain.tld';
-      civ2 = require('../src/lib/civ2-commands.js');
-      createApiHandlers('https', '/job/Chore/job/feature-clusters/job/destroy/buildWithParameters?FEATURE=pouet');
-
-      civ2
-        .destroyFeatureCluster('pouet')
-        .then((response) => {
-          expect(response.body.toString()).to.equal('ok');
-          done();
-        })
-        .catch(done);
+      createApiHandlers('https', '/job/Chore/job/feature-clusters/job/destroy/buildWithParameters', 'FEATURE=pouet');
+      const response = await civ2.destroyFeatureCluster('pouet');
+      expect(response.body.toString()).to.equal('ok');
     });
   });
 
   describe('Github operations', () => {
-    let civ2;
-
-    beforeEach(() => {
-      civ2 = require('../src/lib/civ2-commands.js');
-    });
-
     describe('deleteBranch', () => {
       it('should call github API', async () => {
         nock('https://api.github.com')
@@ -223,7 +146,7 @@ describe('civ2', function() {
   });
 });
 
-function createApiHandlers(protocol, route) {
+function createApiHandlers(protocol, route, body) {
   const prefix = protocol === 'https' ? 'https://' : '';
 
   nock(`${prefix}${process.env.HUBOT_JENKINS_URL}`)
@@ -234,9 +157,8 @@ function createApiHandlers(protocol, route) {
     });
 
   if (route) {
-    const baseUrl = `${prefix}${process.env.HUBOT_JENKINS_AUTH}@${process.env.HUBOT_JENKINS_URL}`;
-    nock(baseUrl)
-      .post(route)
+    nock(`${prefix}${process.env.HUBOT_JENKINS_AUTH}@${process.env.HUBOT_JENKINS_URL}`)
+      .post(route, body)
       .reply(200, 'ok');
   }
 }

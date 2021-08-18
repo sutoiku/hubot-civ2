@@ -18,15 +18,15 @@
     "url": "https://github.com/hubot-scripts/hubot-civ2/issues"
   },
   "dependencies": {
-    "@octokit/rest": "^18.5.2",
-    "aws-sdk": "^2.875.0",
-    "coffee-script": "~1.12",
-    "debug": "^4.3.1",
+    "@octokit/rest": "^18.9.1",
+    "aws-sdk": "^2.970.0",
+    "coffee-script": "^1.12.7",
+    "debug": "^4.3.2",
     "github-api": "^3.4.0",
-    "jenkins": "^0.20.1",
+    "jenkins": "^0.28.1",
     "jira-connector": "^3.1.0",
-    "request": "^2.87.0",
-    "request-promise": "^4.2.4"
+    "request": "^2.88.2",
+    "request-promise": "^4.2.6"
   },
   "devDependencies": {
     "chai": "^4.3.4",

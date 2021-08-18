@@ -34,7 +34,6 @@ const routes = require('./lib/routes');
 const gh = require('./lib/github');
 const aws = require('./lib/aws');
 const { log, logError } = require('./lib/utils');
-const PivotalTracker = require('./lib/pivotal-tracker');
 const Jira = require('./lib/jira');
 
 const REPLICATED_STABLE_CHANNEL = 'Stable';
@@ -280,7 +279,7 @@ module.exports = function (robot) {
       return true;
     } catch (err) {
       logError(err);
-      robot.messageRoom(CHANNELS.default, `An error occured while looking for PT references in "${pr.branch}": ${err}`);
+      robot.messageRoom(CHANNELS.default, `An error occured while looking for references in "${pr.branch}": ${err}`);
       res.status(500).send('Error');
     }
   }
@@ -334,10 +333,6 @@ async function announcePrMerge(branch, robot, base, mergedPRs, res) {
   try {
     mergedPRs.set(branch, { when: Date.now() });
 
-    const ptDescription = await generateBranchPtDescription(branch);
-    if (ptDescription) {
-      text.push(ptDescription);
-    }
     const jiraDescription = await generateBranchJiraDescription(branch);
     if (jiraDescription) {
       text.push(jiraDescription);
@@ -371,27 +366,13 @@ function inferIconFromBranchName(branch) {
   }
 }
 
-async function generateBranchPtDescription(branch) {
-  const pivotalTracker = PivotalTracker.initialize();
-  if (!pivotalTracker) {
-    return;
-  }
-
-  const ptId = pivotalTracker.getPtIdFromBranchName(branch);
-  if (ptId) {
-    const pt = await pivotalTracker.getStory(ptId);
-    const ptLink = pivotalTracker.makePtLink(ptId);
-    return `It implements PT <${ptLink}|#${pt.id} (${pt.name})>.`;
-  }
-}
-
 async function generateBranchJiraDescription(branch) {
   const jira = Jira.initialize();
   if (!jira) {
     return;
   }
 
-  const issueId =await jira.getIdFromBranchName(branch);
+  const issueId = await jira.getIdFromBranchName(branch);
   if (issueId) {
     const issue = await jira.getStory(issueId);
     const issueLink = jira.makeLink(issueId);

@@ -16,7 +16,6 @@ const REPOS = [
   'team',
 ];
 
-const PivotalTracker = require('./pivotal-tracker');
 const Jira = require('./jira');
 const GitHub = require('github-api');
 const { GITHUB_TOKEN } = process.env;
@@ -24,7 +23,6 @@ const gh = new GitHub({ token: GITHUB_TOKEN });
 const { Octokit } = require('@octokit/rest');
 const aws = require('./aws');
 
-const pivotalTracker = PivotalTracker.initialize();
 const jira = Jira.initialize();
 const GITHUB_ORG_NAME = 'sutoiku';
 const REPOS_MARKER = '# REPOS';
@@ -33,7 +31,6 @@ const ONE_MINUTE = 60 * 1e3;
 
 module.exports = {
   getAllReposBranchInformation,
-  getPTLink,
   createMissingPrs,
   deleteBranch,
   mergePRs,
@@ -323,19 +320,16 @@ async function getPrText(branchName, userName, repos) {
   const key = userName ? await aws.getUserKey(userName, 'github') : null;
   const message = !!key ? '' : `This pull request has been created by ${userName} via the bot.`;
 
-  if (pivotalTracker || jira) {
+  if (jira) {
     return getPrTextWithTracker(branchName, message, strRepos);
   } else {
-    const ptLink = getPTLink(branchName);
-    const description = `${message}\n\n# PT\n${ptLink}\n\n${REPOS_MARKER}\n\n${strRepos}`;
-    return { description };
+    return { description: `${message}\n\n# JIRA\nTODO\n\n${REPOS_MARKER}\n\n${strRepos}` };
   }
 }
 
 async function getPrTextWithTracker(branchName, message, strRepos) {
   const descriptions = {};
 
-  descriptions.pt = pivotalTracker ? await getPrTextWithPivotal(branchName) : '';
   descriptions.jira = jira ? await getPrTextWithJira(branchName) : '';
 
   if (descriptions.pt || descriptions.jira) {
@@ -362,38 +356,6 @@ async function getPrTextWithJira(branchName) {
     console.error(`Error fetching JIRA #${issueId}: ${err.message}`);
     return null;
   }
-}
-
-async function getPrTextWithPivotal(branchName) {
-  const ptId = pivotalTracker.getPtIdFromBranchName(branchName);
-  if (!ptId) {
-    return null;
-  }
-
-  try {
-    const pt = await pivotalTracker.getStory(ptId);
-    const ptLink = getPTLink(branchName);
-
-    const description = `# PT\n\n${ptLink}\n\n# Description\n\n${pt.description}`;
-    return { description, name: pt.name };
-  } catch (err) {
-    console.error(`Error fetching PT #${ptId}: ${err.message}`);
-    return null;
-  }
-}
-
-function getPTLink(branchName, options) {
-  if (!pivotalTracker) {
-    return '';
-  }
-
-  const ptId = pivotalTracker.getPtIdFromBranchName(branchName);
-  if (!ptId) {
-    return;
-  }
-
-  const link = pivotalTracker.makePtLink(ptId);
-  return formatLink(`PT #${ptId}`, link, options);
 }
 
 async function getJiraLink(branchName, options) {
