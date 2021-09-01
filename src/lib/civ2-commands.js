@@ -169,7 +169,7 @@ function getBaseUrl() {
 
 function formatBranchInformation(branchName, status) {
   const result = [];
-  const ptLink = ghApi.getPTLink(branchName, { slack: true });
+  const ptLink = ghApi.getJiraLink(branchName, { slack: true });
 
   if (ptLink) {
     result.push(ptLink);

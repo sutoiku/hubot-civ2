@@ -30,6 +30,7 @@ const REPOS_MARKER = '# REPOS';
 const ONE_MINUTE = 60 * 1e3;
 
 module.exports = {
+  getJiraLink,
   getAllReposBranchInformation,
   createMissingPrs,
   deleteBranch,
@@ -319,10 +320,9 @@ async function getPrText(branchName, userName, repos) {
   const key = userName ? await aws.getUserKey(userName, 'github') : null;
   const message = !!key ? '' : `This pull request has been created by ${userName} via the bot.`;
 
-  const trackerDesc =  jira && await getPrTextWithJira(branchName);
+  const trackerDesc = jira && (await getPrTextWithJira(branchName));
   return trackerDesc || { description: `${message}\n\n# JIRA\nTODO\n\n${REPOS_MARKER}\n\n${strRepos}` };
 }
-
 
 async function getPrTextWithJira(branchName) {
   const issueId = await jira.getIdFromBranchName(branchName);
