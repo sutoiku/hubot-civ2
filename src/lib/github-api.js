@@ -3,6 +3,7 @@ const REPOS = [
   'kyu',
   'particula',
   'praxis',
+  'librarium',
   'lorem',
   'fermat',
   'officer',
