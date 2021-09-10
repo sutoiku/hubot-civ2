@@ -1,6 +1,7 @@
 'use strict';
 
 const JiraClient = require('jira-connector');
+const jira2md = require('jira2md');
 
 module.exports = class Jira {
   constructor(host, email, api_token) {
@@ -50,7 +51,7 @@ module.exports = class Jira {
 
   async getStory(issueKey) {
     const issue = await this.getIssue(issueKey);
-    const { summary, description } = issue.fields;
-    return { id: issueKey, name: summary, description };
+    const description = jira2md.to_markdown(issue.fields.description);
+    return { id: issueKey, name: issue.fields.summary, description };
   }
 };
