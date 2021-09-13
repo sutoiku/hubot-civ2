@@ -65,7 +65,7 @@ exports.destroyFeatureCluster = (FEATURE) => {
 exports.getBranchInformation = async function (branchName, userName) {
   try {
     const status = await ghApi.getAllReposBranchInformation(branchName, userName);
-    return formatBranchInformation(branchName, status);
+    return await formatBranchInformation(branchName, status);
   } catch (error) {
     console.error(error);
     return `Error: ${error.message}`;
@@ -167,9 +167,9 @@ function getBaseUrl() {
 // HELPERS
 // -----------------------------------------------------------------------------
 
-function formatBranchInformation(branchName, status) {
+async function formatBranchInformation(branchName, status) {
   const result = [];
-  const ptLink = ghApi.getJiraLink(branchName, { slack: true });
+  const ptLink = await ghApi.getJiraLink(branchName, { slack: true });
 
   if (ptLink) {
     result.push(ptLink);
