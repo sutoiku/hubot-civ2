@@ -14,6 +14,7 @@ const REPOS = [
   'marcus',
   'pictura',
   'stoic-io',
+  'stoic-io-arrow',
   'team',
 ];
 
