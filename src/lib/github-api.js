@@ -154,7 +154,11 @@ async function updatePRsDescriptions(branchName, userName) {
     octokit.pulls.update({ owner: GITHUB_ORG_NAME, repo: repoName, pull_number: pr.number, body: pr.body })
   );
 
-  return Promise.all(updatePromises);
+  try {
+    return await Promise.all(updatePromises);
+  } catch (err) {
+    console.error('Error while updating descriptions', err);
+  }
 }
 
 async function createPr(repoName, branchName, targetBase, prText, octokit, options) {
