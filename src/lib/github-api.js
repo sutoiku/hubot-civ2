@@ -16,6 +16,7 @@ const REPOS = [
   'stoic-io',
   'stoic-io-arrow',
   'team',
+  'stoic-kubernetes',
 ];
 
 const Jira = require('./jira');
