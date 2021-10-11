@@ -1,9 +1,14 @@
 const rp = require('request-promise');
-const ghApi = require('./github-api');
 const Jenkins = require('jenkins');
+const ghApi = require('./github-api');
+const Jira = require('./jira');
 
 const REQUIRED_STATUS = new Set(['linting', 'unit-tests', 'stoic-assemble', 'stoic-integration-tests']);
 const REVIEW_ICONS = { PENDING: '🟡', COMMENTED: '⚪', APPROVED: '✔️', REQUEST_CHANGES: '❌' };
+
+// -----------------------------------------------------------------------------
+// DEPLOYMENT
+// -----------------------------------------------------------------------------
 
 exports.deployV1 = function (tag) {
   return buildJob('Deployment/ci-v1', tag);
@@ -28,14 +33,38 @@ exports.updateInstance = async function (receivedDomain, env, requestedVersion) 
   return version;
 };
 
+// -----------------------------------------------------------------------------
+// RELEASE
+// -----------------------------------------------------------------------------
+
 exports.release = function (tag, UpdatePivotalAndGitHub) {
   const additionalParameters = UpdatePivotalAndGitHub ? { UpdatePivotalAndGitHub } : undefined;
   return buildJob('Release/global-release', tag, additionalParameters);
 };
 
+exports.triggerJiraRelease = async function (projectKey, releaseName) {
+  const jira = Jira.initialize();
+  const { id: versionId } = await jira.createNewVersion(projectKey, releaseName);
+  const issues = await jira.listIssuesToRelease('SAN');
+
+  const issuesIds = issues.map((it) => it.key);
+  await jira.setIssuesVersion(issuesIds, versionId);
+  await jira.releaseVersion(versionId);
+  const releaseUrl = `https://${jira.host}/projects/${projectKey}/versions/${versionId}/tab/release-report-warnings`;
+  return `Created release <${releaseUrl}|${releaseName}>`;
+};
+
+// -----------------------------------------------------------------------------
+// MAINTENANCE
+// -----------------------------------------------------------------------------
+
 exports.updateBot = function () {
   return buildJob('Chore/hubot/stoic-hubot/master');
 };
+
+// -----------------------------------------------------------------------------
+// BRANCHES
+// -----------------------------------------------------------------------------
 
 exports.archive = function (repo, branch) {
   const { CI_API_ROOT } = getEnv();
@@ -71,6 +100,10 @@ exports.getBranchInformation = async function (branchName, userName) {
     return `Error: ${error.message}`;
   }
 };
+
+// -----------------------------------------------------------------------------
+// PULL REQUESTS
+// -----------------------------------------------------------------------------
 
 exports.createPRs = async function (branchName, userName, targetBase, options) {
   const created = await ghApi.createMissingPrs(branchName, userName, targetBase, options);

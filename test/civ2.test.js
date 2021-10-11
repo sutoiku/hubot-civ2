@@ -31,7 +31,7 @@ describe('hubot integration', () => {
     });
 
     it('should register 3 POST webhooks, 1 GET', () => {
-      expect(robot.router.post).to.have.callCount(3);
+      expect(robot.router.post).to.have.callCount(4);
       expect(robot.router.get).to.have.callCount(1);
     });
 
@@ -427,8 +427,7 @@ describe('hubot integration', () => {
             expect(hubotMock._messageRoom).to.deep.equal([
               {
                 channel: '#testing-ci',
-                msg:
-                  '<https://github/com/sutoiku/my-repo/branches|Branch feature/toto> of <https://github/com/sutoiku/my-repo|my-repo> was merged into master, I deleted it.',
+                msg: '<https://github/com/sutoiku/my-repo/branches|Branch feature/toto> of <https://github/com/sutoiku/my-repo|my-repo> was merged into master, I deleted it.',
               },
               {
                 channel: '#testing-ci',
@@ -516,7 +515,7 @@ describe('hubot integration', () => {
 
       describe('Health', () => {
         it('should declare a health route', () => {
-          expect(hubotMock._routes[3].route).to.equal('/hubot/health');
+          expect(hubotMock._routes[4].route).to.equal('/hubot/health');
         });
 
         it('should respond OK', async () => {

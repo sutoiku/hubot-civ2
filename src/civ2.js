@@ -246,6 +246,8 @@ module.exports = function (robot) {
 
   robot.router.post('/hubot/civ2/announce-pr', routes.announcePRs);
 
+  robot.router.post('/hubot/civ2/release', routes.release);
+
   robot.router.get('/hubot/health', (req, res) => {
     res.send('OK');
   });

@@ -4,7 +4,7 @@ const { log } = require('./utils');
 
 const SHARED_SIGNATURE = 'a]DzwfrtvHg4mxxgCjZQJGCXvH';
 
-exports.createPr = async function(req, res) {
+exports.createPr = async function (req, res) {
   if (!req.body) {
     log('No payload in create-pr request');
     return res.status(400).send('Payload is mandatory');
@@ -26,7 +26,7 @@ exports.createPr = async function(req, res) {
   }
 };
 
-exports.announcePRs = async function(req, res) {
+exports.announcePRs = async function (req, res) {
   const { text, sign, branch, dryrun } = req.body;
   if (!validateBranchRequest(branch, sign, res, 'announce')) {
     return;
@@ -37,6 +37,22 @@ exports.announcePRs = async function(req, res) {
     : await civ2.announcePRs(branch, text);
   res.send(message);
   log(message);
+};
+
+exports.release = async function (req, res) {
+  const { projectKey, releaseName, dryrun, sign } = req.body;
+  if (!checkSignature(projectKey + releaseName, sign)) {
+    return;
+  }
+
+  try {
+    const message = dryrun
+      ? `Request OK, trigger release "${releaseName}" on project "${projectKey}"`
+      : await civ2.triggerJiraRelease(projectKey, releaseName);
+    res.send(message);
+  } catch (err) {
+    res.status(400).send(err.message + '\n' + err.stack);
+  }
 };
 
 function validateBranchRequest(branch, sign, res, operation) {

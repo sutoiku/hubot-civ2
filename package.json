@@ -25,6 +25,7 @@
     "github-api": "^3.4.0",
     "jenkins": "^0.28.1",
     "jira-connector": "^3.1.0",
+    "jira.js": "^2.6.3",
     "jira2md": "^2.1.0",
     "request": "^2.88.2",
     "request-promise": "^4.2.6"
