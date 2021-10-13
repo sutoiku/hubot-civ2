@@ -110,15 +110,25 @@ module.exports = class Jira {
   async setIssuesVersion(issuesIds, versionId) {
     const allUpdates = [];
 
-    // TODO add delay to avoid frequency violation ?
     for (const issueId of issuesIds) {
+      if (allUpdates.length % 50 === 0) {
+        // wait for a sec every 50 issues
+        await sleep(1000);
+      }
+
       const issueParams = { issueIdOrKey: issueId, fields: { fixVersions: [{ id: versionId }] } };
       allUpdates.push(this.client.issues.editIssue(issueParams));
     }
+
+    await Promise.allSettled(allUpdates);
   }
 };
 
 function genReleaseDate() {
   const d = new Date();
   return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+}
+
+async function sleep(duration) {
+  return new Promise((resolve) => setTimeout(resolve, duration));
 }
