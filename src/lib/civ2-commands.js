@@ -45,7 +45,7 @@ exports.release = function (tag, UpdatePivotalAndGitHub) {
 exports.triggerJiraRelease = async function (projectKey, releaseName) {
   const jira = Jira.initialize();
   const { id: versionId } = await jira.createNewVersion(projectKey, releaseName);
-  const issues = await jira.listIssuesToRelease('SAN');
+  const issues = await jira.listIssuesToRelease(projectKey);
 
   const issuesIds = issues.map((it) => it.key);
   await jira.setIssuesVersion(issuesIds, versionId);
