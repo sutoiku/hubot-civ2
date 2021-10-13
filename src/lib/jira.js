@@ -5,6 +5,8 @@ const JiraClient = require('jira-connector');
 const { Version2Client } = require('jira.js');
 const jira2md = require('jira2md');
 
+const MAX_RESULTS = 1000;
+
 module.exports = class Jira {
   constructor(host, email, api_token) {
     this._projects = null;
@@ -92,15 +94,23 @@ module.exports = class Jira {
 
   async listIssuesToRelease(key) {
     const jql = `status=Accepted AND fixVersion=EMPTY AND project=${key}`;
-    const { issues } = await this.client.issueSearch.searchForIssuesUsingJql({ jql });
-    // TODO handle pagination
-    return issues;
+
+    const reqParams = { maxResults: MAX_RESULTS, jql };
+    const { total, issues: allIssues } = await this.client.issueSearch.searchForIssuesUsingJql(reqParams);
+
+    while (allIssues.length < total) {
+      const pageParams = { ...reqParams, startAt: allIssues.length };
+      const { issues } = await this.client.issueSearch.searchForIssuesUsingJql(pageParams);
+      allIssues.push(...issues);
+    }
+
+    return allIssues;
   }
 
   async setIssuesVersion(issuesIds, versionId) {
     const allUpdates = [];
 
-    // TODO add delay to avoid frequency violation
+    // TODO add delay to avoid frequency violation ?
     for (const issueId of issuesIds) {
       const issueParams = { issueIdOrKey: issueId, fields: { fixVersions: [{ id: versionId }] } };
       allUpdates.push(this.client.issues.editIssue(issueParams));
