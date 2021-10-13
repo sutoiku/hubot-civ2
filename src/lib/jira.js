@@ -111,8 +111,7 @@ module.exports = class Jira {
     const allUpdates = [];
 
     for (const issueId of issuesIds) {
-      if (allUpdates.length % 50 === 0) {
-        // wait for a sec every 50 issues
+      if (allUpdates.length % 10 === 0) {
         await sleep(1000);
       }
 
