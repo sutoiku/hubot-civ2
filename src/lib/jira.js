@@ -107,27 +107,21 @@ module.exports = class Jira {
     return allIssues;
   }
 
-  async setIssuesVersion(issuesIds, versionId) {
+  async setIssuesVersion(issues, versionId) {
     const allUpdates = [];
 
-    for (const issueId of issuesIds) {
-      if (allUpdates.length % 10 === 0) {
-        await sleep(1000);
+    for (const { id: issueIdOrKey } of issues) {
+      allUpdates.push(this.client.issues.editIssue({ issueIdOrKey, fields: { fixVersions: [{ id: versionId }] } }));
+
+      if (allUpdates.length % 20 === 0) {
+        await Promise.allSettled(allUpdates);
+        allUpdates = [];
       }
-
-      const issueParams = { issueIdOrKey: issueId, fields: { fixVersions: [{ id: versionId }] } };
-      allUpdates.push(this.client.issues.editIssue(issueParams));
     }
-
-    await Promise.allSettled(allUpdates);
   }
 };
 
 function genReleaseDate() {
   const d = new Date();
   return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-}
-
-async function sleep(duration) {
-  return new Promise((resolve) => setTimeout(resolve, duration));
 }
