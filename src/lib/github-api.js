@@ -1,30 +1,14 @@
-const REPOS = [
-  'ryu',
-  'kyu',
-  'particula',
-  'praxis',
-  'librarium',
-  'lorem',
-  'fermat',
-  'officer',
-  'principia',
-  'demos.stoic',
-  'grid',
-  'core.stoic',
-  'marcus',
-  'pictura',
-  'stoic-io',
-  'stoic-io-arrow',
-  'team',
-  'stoic-kubernetes',
-];
-
 const Jira = require('./jira');
 const GitHub = require('github-api');
 const { GITHUB_TOKEN } = process.env;
 const gh = new GitHub({ token: GITHUB_TOKEN });
 const { Octokit } = require('@octokit/rest');
 const aws = require('./aws');
+
+const https = require('https');
+const url = require('url');
+
+const { REPOS_URL = 'https://public.stoic.com/internal/meta/repositories.json' } = process.env;
 
 const jira = Jira.initialize();
 const GITHUB_ORG_NAME = 'sutoiku';
@@ -184,8 +168,9 @@ async function createPr(repoName, branchName, targetBase, prText, octokit, optio
 }
 
 async function getAllReposBranchInformation(branchName, userName) {
+  const reposList = await listRepos();
   const status = await Promise.all(
-    REPOS.map(async (repoName) => {
+    reposList.map(async (repoName) => {
       const repo = gh.getRepo(GITHUB_ORG_NAME, repoName);
       const repoData = await repoHasBranch(repo, repoName, branchName, userName);
       return Object.assign({ repo, repoName }, repoData);
@@ -449,4 +434,31 @@ function formatRefForList({ html_url, name }) {
 
 async function sleep(duration) {
   return new Promise((resolve) => setTimeout(resolve, duration));
+}
+
+async function listRepos() {
+  const parsedUrl = url.parse(REPOS_URL);
+  const jsonFile = await request(parsedUrl);
+
+  return Object.keys(jsonFile.repositories);
+}
+
+// -----------------------------------------------------------------------------
+// HTTPS
+// -----------------------------------------------------------------------------
+
+async function request(params) {
+  return new Promise((resolve, reject) => {
+    https.request(params, (res) => parseHttpRes(res, resolve, reject)).end();
+  });
+}
+
+function parseHttpRes(res, resolve, reject) {
+  const chunks = [];
+  res.on('error', reject);
+  res.on('data', (chunk) => chunks.push(chunk));
+  res.on('end', () => {
+    const res = JSON.parse(Buffer.concat(chunks).toString());
+    return res && res.error ? reject(res.error) : resolve(res);
+  });
 }
