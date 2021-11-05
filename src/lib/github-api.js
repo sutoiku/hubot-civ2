@@ -15,6 +15,7 @@ const REPOS = [
   'pictura',
   'stoic-io',
   'stoic-io-arrow',
+  'stoic-native-commons',
   'team',
   'stoic-kubernetes',
 ];
