@@ -74,7 +74,7 @@ module.exports = class Jira {
 
   async getStory(issueKey) {
     const issue = await this.getIssue(issueKey);
-    const description = jira2md.to_markdown(issue.fields.description);
+    const description = issue.fields?.description ? jira2md.to_markdown(issue.fields.description) : '';
     return { id: issueKey, name: issue.fields.summary, description };
   }
 
