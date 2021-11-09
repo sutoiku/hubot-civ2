@@ -143,9 +143,10 @@ module.exports = function (robot) {
     /create pull requests (\S*)( to (\S*))?/i,
     responderFactory(async (msg) => {
       const branchName = msg.match[1];
-      const target = msg.match[3] || 'master';
+      const target = computeTargetBranch(msg.match[3], branchName);
 
       msg.reply(`Creating PRs for branch ${branchName}...`);
+
       const message = await civ2.createPRs(branchName, msg.message.user.name, target, { draft: true });
       const status = await civ2.getBranchInformation(branchName, msg.message.user.name);
       msg.reply(`${message}\n${status}`);
@@ -299,6 +300,19 @@ module.exports = function (robot) {
     };
   }
 };
+
+function computeTargetBranch(target, branchName) {
+  if (target) {
+    return target;
+  }
+
+  if (branchName.startsWith('child/')) {
+    // following our dev/ and child/ branch naming convention
+    return branchName.split('/').slice(1, -1).join('/');
+  }
+
+  return 'master';
+}
 
 // -----------------------------------------------------------------------------
 // PR MERGE HANDLERS

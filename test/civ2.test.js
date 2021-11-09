@@ -218,6 +218,27 @@ describe('hubot integration', () => {
             ]
           ));
 
+        it('should create pr regars do the dev/ and child/ convention', async () =>
+          expectCiv2CommandCall(
+            'create pull requests child/feature/toto-ABC-123/sub-456',
+            [
+              {
+                command: 'createPRs',
+                expectedArgs: [
+                  'child/feature/toto-ABC-123/sub-456',
+                  'John Doe',
+                  'feature/toto-ABC-123',
+                  { draft: true },
+                ],
+              },
+              { command: 'getBranchInformation', expectedArgs: ['child/feature/toto-ABC-123/sub-456', 'John Doe'] },
+            ],
+            [
+              { method: 'reply', args: ['Creating PRs for branch child/feature/toto-ABC-123/sub-456...'] },
+              { args: ['SPY:createPRs\nSPY:getBranchInformation'], method: 'reply' },
+            ]
+          ));
+
         it('should notify in an error occurs', async () =>
           expectCiv2Error('create pull requests toto/pipo', [
             { command: 'createPRs', expectedArgs: ['toto/pipo', 'John Doe', 'master', { draft: true }] },
