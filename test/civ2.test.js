@@ -227,7 +227,7 @@ describe('hubot integration', () => {
                 expectedArgs: [
                   'child/feature/toto-ABC-123/sub-456',
                   'John Doe',
-                  'feature/toto-ABC-123',
+                  'dev/feature/toto-ABC-123',
                   { draft: true },
                 ],
               },

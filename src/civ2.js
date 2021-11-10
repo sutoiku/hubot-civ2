@@ -308,7 +308,7 @@ function computeTargetBranch(target, branchName) {
 
   if (branchName.startsWith('child/')) {
     // following our dev/ and child/ branch naming convention
-    return branchName.split('/').slice(1, -1).join('/');
+    return 'dev/' + branchName.split('/').slice(1, -1).join('/');
   }
 
   return 'master';
