@@ -47,8 +47,7 @@ exports.triggerJiraRelease = async function (projectKey, releaseName) {
   const { id: versionId } = await jira.createNewVersion(projectKey, releaseName);
   const issues = await jira.listIssuesToRelease(projectKey);
 
-  const issuesIds = issues.map((it) => it.key);
-  await jira.setIssuesVersion(issuesIds, versionId);
+  await jira.setIssuesVersion(issues, versionId);
   await jira.releaseVersion(versionId);
   const releaseUrl = `https://${jira.host}/projects/${projectKey}/versions/${versionId}/tab/release-report-warnings`;
   return { releaseName, releaseUrl, versionId };

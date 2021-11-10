@@ -108,7 +108,7 @@ module.exports = class Jira {
   }
 
   async setIssuesVersion(issues, versionId) {
-    const allUpdates = [];
+    let allUpdates = [];
 
     for (const { id: issueIdOrKey } of issues) {
       allUpdates.push(this.client.issues.editIssue({ issueIdOrKey, fields: { fixVersions: [{ id: versionId }] } }));
