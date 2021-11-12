@@ -44,13 +44,13 @@ exports.release = function (tag, UpdatePivotalAndGitHub) {
 
 exports.triggerJiraRelease = async function (projectKey, releaseName) {
   const jira = Jira.initialize();
-  const { id: versionId } = await jira.createNewVersion(projectKey, releaseName);
+  const version = await jira.createNewVersion(projectKey, releaseName);
   const issues = await jira.listIssuesToRelease(projectKey);
 
-  await jira.setIssuesVersion(issues, versionId);
-  await jira.releaseVersion(versionId);
-  const releaseUrl = `https://${jira.host}/projects/${projectKey}/versions/${versionId}/tab/release-report-warnings`;
-  return { releaseName, releaseUrl, versionId };
+  await jira.setIssuesVersion(issues, version.id);
+  await jira.releaseVersion(version.id);
+  const releaseUrl = `https://${jira.host}/projects/${projectKey}/versions/${version.id}/tab/release-report-warnings`;
+  return { releaseName, releaseUrl, versionId: version.id, version };
 };
 
 // -----------------------------------------------------------------------------
