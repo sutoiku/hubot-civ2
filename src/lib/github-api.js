@@ -65,8 +65,7 @@ async function createMissingPrs(branchName, userName, targetBase = 'master', opt
     }
   }
 
-  // asynchronously update descriptions with links after creation
-  updatePRsDescriptions(branchName, userName);
+  await updatePRsDescriptions(branchName, userName);
 
   return created;
 }
