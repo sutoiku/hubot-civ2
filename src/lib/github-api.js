@@ -401,14 +401,18 @@ function replaceLinks(repos, links) {
       continue;
     }
 
-    const idx = replacedRepo.pr.body.indexOf(REPOS_MARKER);
-    replacedRepo.pr.body =
-      replacedRepo.pr.body.substr(0, idx === -1 ? replacedRepo.pr.body.length : idx) +
-      '\n\n' +
-      REPOS_MARKER +
-      '\n\n' +
-      links;
-    replaced[repoName] = replacedRepo;
+    const idx = replacedRepo.pr.body?.indexOf(REPOS_MARKER);
+    if (idx) {
+      replacedRepo.pr.body =
+        replacedRepo.pr.body.substr(0, idx === -1 ? replacedRepo.pr.body.length : idx) +
+        '\n\n' +
+        REPOS_MARKER +
+        '\n\n' +
+        links;
+      replaced[repoName] = replacedRepo;
+    } else {
+      replacedRepo.pr.body = REPOS_MARKER + '\n\n' + links;
+    }
   }
 
   return replaced;
