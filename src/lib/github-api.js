@@ -4,6 +4,7 @@ const { GITHUB_TOKEN } = process.env;
 const gh = new GitHub({ token: GITHUB_TOKEN });
 const { Octokit } = require('@octokit/rest');
 const aws = require('./aws');
+const { log } = require('./utils');
 
 const https = require('https');
 const url = require('url');
@@ -36,6 +37,7 @@ function findMissingPrs(branchInformation) {
       prsToCreate.push(repoName);
     }
   }
+
   return prsToCreate;
 }
 
@@ -162,6 +164,8 @@ async function createPr(repoName, branchName, targetBase, prText, octokit, optio
     const response = await octokit.pulls.create(prSpec);
     return Object.assign({ repo: { name: repoName } }, response ? response.data : {});
   } catch (err) {
+    log(`Failed to create PR ${prSpec.title} on ${prSpec.repo}`, err);
+
     return { repo: { name: repoName }, error: err };
   }
 }
@@ -418,10 +422,10 @@ function replaceLinks(repos, links) {
   return replaced;
 }
 
-function formatJiraReferences(issueId, refs) {
+function formatJiraReferences(issueId, references) {
   const mdLink = `[#${issueId}](${jira.makeLink(issueId)})`;
   const messageParts = [`Pardon the interruption, but there seems to be some TODOs attached to this issue ${mdLink}. `];
-  for (const [repoName, refs] of Object.entries(refs)) {
+  for (const [repoName, refs] of Object.entries(references)) {
     const refList = refs.map(formatRefForList).join('\n');
     messageParts.push(`In \`${repoName}\` (${refs.length}):\n\n${refList}`);
   }

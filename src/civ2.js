@@ -144,6 +144,7 @@ module.exports = function (robot) {
     responderFactory(async (msg) => {
       const branchName = msg.match[1];
       const target = computeTargetBranch(msg.match[3], branchName);
+      log(`Request to create PR  for ${branchName} to ${target}`);
 
       msg.reply(`Creating PRs for branch ${branchName}...`);
 
@@ -258,7 +259,7 @@ module.exports = function (robot) {
 
   async function handlePrMerge(pr, res) {
     const { repo, branch, base } = pr;
-    log('Merged PR', repo, branch);
+    log(`Merged PR ${repo}#${branch}`);
 
     if (
       (await tryDeleteBranch(repo, branch, base, robot, res)) &&

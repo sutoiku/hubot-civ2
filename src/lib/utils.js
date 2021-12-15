@@ -2,14 +2,14 @@
 
 const IS_TEST = process.env.NODE_ENV === 'test';
 
-exports.log = function log(msg) {
+exports.log = function log(...args) {
   //if (!IS_TEST) {
-  console.log(msg);
+  console.log(...args);
   //}
 };
 
-exports.logError = function logError(msg) {
+exports.logError = function logError(...args) {
   //if (!IS_TEST) {
-  console.error(msg);
+  console.error(...args);
   //}
 };
