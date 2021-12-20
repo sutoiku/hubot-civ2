@@ -160,6 +160,11 @@ async function createPr(repoName, branchName, targetBase, prText, octokit, optio
   if (prText.name) {
     prSpec.title = prText.name;
   }
+
+  if (prSpec.id) {
+    prSpec.title = `[${prSpec.id}] ${prSpec.title}`;
+  }
+
   try {
     const response = await octokit.pulls.create(prSpec);
     return Object.assign({ repo: { name: repoName } }, response ? response.data : {});
@@ -330,7 +335,7 @@ async function getPrTextWithJira(branchName) {
     const story = await jira.getStory(issueId);
     const jiraLink = await getJiraLink(branchName);
     const description = `# JIRA\n\n${jiraLink}\n\n# Description\n\n${story.description}`;
-    return { description, name: story.name };
+    return { description, name: story.name, id: issueId };
   } catch (err) {
     console.error(`Error fetching JIRA #${issueId}`, err);
     return null;
