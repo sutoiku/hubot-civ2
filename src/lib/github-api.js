@@ -42,8 +42,6 @@ function findMissingPrs(branchInformation) {
 }
 
 async function createMissingPrs(branchName, userName, targetBase = 'master', options = {}) {
-  const octokit = await getOctokit(userName);
-
   const branchInformation = await getAllReposBranchInformation(branchName, userName);
   const prsToCreate = findMissingPrs(branchInformation);
 
@@ -53,14 +51,14 @@ async function createMissingPrs(branchName, userName, targetBase = 'master', opt
 
   const prText = await getPrText(branchName, userName, Object.keys(branchInformation));
 
-  const createPrPromises = prsToCreate.map((repoName) =>
-    createPr(repoName, branchName, targetBase, prText, octokit, options)
-  );
-
-  const responses = await Promise.all(createPrPromises);
+  const octokit = await getOctokit(userName);
   const created = {};
-  for (const response of responses) {
-    if (response.repo && response.repo.name) {
+
+  for (const repoName of repoNames) {
+    // Content creation on GH should remain sequential
+    // https://docs.github.com/en/rest/guides/best-practices-for-integrators#dealing-with-secondary-rate-limits
+    const response = await createPr(repoName, branchName, targetBase, prText, octokit, options);
+    if (response?.repo?.name) {
       created[response.repo.name] = response;
     } else {
       console.log('Unexpected response from createPr', response);
@@ -136,14 +134,24 @@ async function updatePRsDescriptions(branchName, userName) {
   const updated = replaceLinks(repos, linkDescription);
   const octokit = await getOctokit(userName);
 
-  const updatePromises = Object.values(updated).map(({ repoName, pr }) =>
-    octokit.pulls.update({ owner: GITHUB_ORG_NAME, repo: repoName, pull_number: pr.number, body: pr.body })
-  );
+  for (const { repoName, pr } of Object.values(updated)) {
+    const response = await updateOnePrDescription(octokit, repoName, pr);
+    if (response.error) {
+      console.error(`Error occured while updating PRs on "${repoName}"= ${response.error}`);
+    }
+  }
+}
 
+async function updateOnePrDescription(octokit, repoName, pr) {
   try {
-    return await Promise.all(updatePromises);
-  } catch (err) {
-    console.error('Error while updating descriptions', err);
+    return await octokit.pulls.update({
+      owner: GITHUB_ORG_NAME,
+      repo: repoName,
+      pull_number: pr.number,
+      body: pr.body,
+    });
+  } catch (error) {
+    return { error };
   }
 }
 
