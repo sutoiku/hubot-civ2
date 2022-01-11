@@ -2,6 +2,7 @@ const chai = require('chai');
 const sinon = require('sinon');
 const Robot = require('../src/civ2');
 const civ2Commands = require('../src/lib/civ2-commands');
+const AWS = require('aws-sdk-mock');
 const { setVariables, resetVariables } = require('./utils');
 
 chai.use(require('sinon-chai'));
@@ -9,7 +10,7 @@ chai.use(require('sinon-chai'));
 const { expect } = chai;
 
 describe('hubot integration', () => {
-  describe('Regisrations', () => {
+  describe('Registrations', () => {
     let robot;
 
     beforeEach(function () {
@@ -113,12 +114,17 @@ describe('hubot integration', () => {
   describe('Commands', () => {
     let civ2mock;
     let robot;
+    let _originalVariables;
 
     beforeEach(() => {
       hubotMock = new HubotMock();
       civ2mock = new CIV2Mock();
       robot = new Robot(hubotMock);
     });
+
+    afterEach(() => resetVariables(_originalVariables));
+
+    afterEach(() => AWS.restore());
 
     afterEach(() => civ2mock.restore());
 
@@ -390,6 +396,11 @@ describe('hubot integration', () => {
     // -----------------------------------------------------------------------------
 
     describe('Router', () => {
+      beforeEach(() => {
+        _originalVariables = setVariables({ AWS_BUILD_BUCKET: 'test' });
+        AWS.mock('S3', 'putObject', (params, done) => done(null));
+      });
+
       describe('GH webhook', () => {
         it('should declare a github webhook route', () => {
           expect(hubotMock._routes[0].route).to.equal('/hubot/civ2/github-webhook');
@@ -408,6 +419,7 @@ describe('hubot integration', () => {
               head: { ref: 'feature/toto', repo: { name: 'my-repo' } },
               base: { ref: 'master' },
               merged: true,
+              merge_commit_sha: 'abc123abc123',
             },
           };
 
@@ -423,7 +435,7 @@ describe('hubot integration', () => {
           };
 
           for (const [kind, icon] of Object.entries(iconsByType)) {
-            it('should detect a feature merge payload', mergePayloadTestFactory(kind, icon));
+            it(`should detect a '${kind}' feature merge payload`, mergePayloadTestFactory(kind, icon));
           }
 
           it('should report failures in the deletion phase', async () => {

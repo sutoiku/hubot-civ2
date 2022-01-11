@@ -7,13 +7,14 @@ describe('github', () => {
     pull_request: {
       head: {
         ref: 'toto',
-        repo: { name: 'titi' }
+        repo: { name: 'titi' },
       },
       base: {
-        ref: 'master'
+        ref: 'master',
       },
-      merged: true
-    }
+      merged: true,
+      merge_commit_sha: 'abc123abc123',
+    },
   };
 
   it('identifies pr closings', () => {
@@ -24,7 +25,8 @@ describe('github', () => {
       branch: 'toto',
       base: 'master',
       action: 'closed',
-      merged: true
+      merged: true,
+      merge_commit_sha: 'abc123abc123',
     });
   });
 });

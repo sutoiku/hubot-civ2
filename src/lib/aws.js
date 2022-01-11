@@ -1,16 +1,23 @@
 const AWS = require('aws-sdk');
-const { AWS_KMS_KEY, AWS_BOT_BUCKET } = process.env;
+const { AWS_KMS_KEY, AWS_BOT_BUCKET, AWS_BUILD_BUCKET } = process.env;
 
 const awsOptions = { region: 'us-west-1' };
 const kms = new AWS.KMS(awsOptions);
-const s3 = new AWS.S3(awsOptions);
 
-exports.storeUserKey = async function(user, key, kind) {
+exports.storeMergeInformation = async function (repo, branch, merge_commit_sha) {
+  const s3 = new AWS.S3(awsOptions);
+  return s3
+    .putObject({ Bucket: process.env.AWS_BUILD_BUCKET, Key: `Merges/${repo}/${merge_commit_sha}`, Body: branch })
+    .promise();
+};
+
+exports.storeUserKey = async function (user, key, kind) {
   const encrypted = await encrypt(key);
+  const s3 = new AWS.S3(awsOptions);
   return s3.putObject({ Bucket: AWS_BOT_BUCKET, Key: user + '-' + kind, Body: encrypted }).promise();
 };
 
-exports.getUserKey = async function(user, kind) {
+exports.getUserKey = async function (user, kind) {
   if (!AWS_BOT_BUCKET || !AWS_KMS_KEY) {
     return null;
   }

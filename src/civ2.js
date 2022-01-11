@@ -258,14 +258,15 @@ module.exports = function (robot) {
   // -----------------------------------------------------------------------------
 
   async function handlePrMerge(pr, res) {
-    const { repo, branch, base } = pr;
-    log(`Merged PR ${repo}#${branch}`);
+    const { repo, branch, base, merge_commit_sha } = pr;
+    log(`Merged PR ${repo}#${branch} (${merge_commit_sha})`);
 
     if (
       (await tryDeleteBranch(repo, branch, base, robot, res)) &&
       (await tryDestroyFeatureCluster(branch, robot, res)) &&
       (await announcePrMerge(branch, robot, base, mergedPRs, res))
     ) {
+      await aws.storeMergeInformation(repo, branch, merge_commit_sha);
       return res.send('OK');
     }
   }
