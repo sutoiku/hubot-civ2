@@ -54,7 +54,7 @@ async function createMissingPrs(branchName, userName, targetBase = 'master', opt
   const octokit = await getOctokit(userName);
   const created = {};
 
-  for (const repoName of repoNames) {
+  for (const { repoName } of Object.values(branchInformation)) {
     // Content creation on GH should remain sequential
     // https://docs.github.com/en/rest/guides/best-practices-for-integrators#dealing-with-secondary-rate-limits
     const response = await createPr(repoName, branchName, targetBase, prText, octokit, options);
