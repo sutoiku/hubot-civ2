@@ -5,16 +5,17 @@ const awsOptions = { region: 'us-west-1' };
 const kms = new AWS.KMS(awsOptions);
 
 exports.storeMergeInformation = async function (repo, branch, merge_commit_sha) {
-  const s3 = new AWS.S3(awsOptions);
-  return s3
+  return createS3Client()
     .putObject({ Bucket: process.env.AWS_BUILD_BUCKET, Key: `Merges/${repo}/${merge_commit_sha}`, Body: branch })
     .promise();
 };
 
 exports.storeUserKey = async function (user, key, kind) {
   const encrypted = await encrypt(key);
-  const s3 = new AWS.S3(awsOptions);
-  return s3.putObject({ Bucket: AWS_BOT_BUCKET, Key: user + '-' + kind, Body: encrypted }).promise();
+
+  return createS3Client()
+    .putObject({ Bucket: AWS_BOT_BUCKET, Key: user + '-' + kind, Body: encrypted })
+    .promise();
 };
 
 exports.getUserKey = async function (user, kind) {
@@ -23,12 +24,15 @@ exports.getUserKey = async function (user, kind) {
   }
 
   try {
-    const { Body } = await s3.getObject({ Bucket: AWS_BOT_BUCKET, Key: user + '-' + kind }).promise();
+    const { Body } = await createS3Client()
+      .getObject({ Bucket: AWS_BOT_BUCKET, Key: user + '-' + kind })
+      .promise();
     return decrypt(Body);
   } catch (err) {
     if (err.code === 'NoSuchKey') {
       return null;
     }
+
     throw err;
   }
 };
@@ -36,25 +40,17 @@ exports.getUserKey = async function (user, kind) {
 async function encrypt(Plaintext) {
   return new Promise((resolve, reject) => {
     const params = { KeyId: AWS_KMS_KEY, Plaintext };
-    kms.encrypt(params, (err, data) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(data.CiphertextBlob);
-      }
-    });
+    kms.encrypt(params, (err, data) => (err ? reject(err) : resolve(data.CiphertextBlob)));
   });
 }
 
 async function decrypt(CiphertextBlob) {
   return new Promise((resolve, reject) => {
     const params = { CiphertextBlob };
-    kms.decrypt(params, (err, data) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(data.Plaintext.toString());
-      }
-    });
+    kms.decrypt(params, (err, data) => (err ? reject(err) : resolve(data.Plaintext.toString())));
   });
+}
+
+function createS3Client() {
+  return new AWS.S3(awsOptions);
 }
