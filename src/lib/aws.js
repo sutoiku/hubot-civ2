@@ -5,9 +5,13 @@ const awsOptions = { region: 'us-west-1' };
 const kms = new AWS.KMS(awsOptions);
 
 exports.storeMergeInformation = async function (repo, branch, merge_commit_sha) {
-  return createS3Client()
-    .putObject({ Bucket: process.env.AWS_BUILD_BUCKET, Key: `Merges/${repo}/${merge_commit_sha}`, Body: branch })
-    .promise();
+  try {
+    return await createS3Client()
+      .putObject({ Bucket: process.env.AWS_BUILD_BUCKET, Key: `Merges/${repo}/${merge_commit_sha}`, Body: branch })
+      .promise();
+  } catch (err) {
+    console.log('Error while saving merged branch information');
+  }
 };
 
 exports.storeUserKey = async function (user, key, kind) {
