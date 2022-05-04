@@ -219,7 +219,7 @@ async function formatBranchInformation(branchName, status) {
   }
 
   const mergeableMessage = mergeable
-    ? "\n\nIt seems to be mergeable. It you're done with the PR feedback comments, just ask me `merge pull requests " +
+    ? "\n\nIt seems to be mergeable. It looks like you're done with the PR feedback comments, just ask me `merge pull requests " +
       branchName +
       '` and I will do it for you.'
     : '';
