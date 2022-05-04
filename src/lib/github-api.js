@@ -22,6 +22,7 @@ module.exports = {
   getAllReposBranchInformation,
   createMissingPrs,
   deleteBranch,
+  listRepos,
   mergePRs,
   closePRs,
   updatePRsDescriptions,

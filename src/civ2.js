@@ -120,6 +120,14 @@ module.exports = function (robot) {
   );
 
   robot.hear(
+    /list repos/i,
+    responderFactory(async (msg) => {
+      const message = await civ2.listRepos(msg.message.user.name);
+      msg.reply(message);
+    })
+  );
+
+  robot.hear(
     /my github token is (\S*)/i,
     responderFactory(async (msg) => {
       const user = msg.message.user.name;

@@ -100,6 +100,16 @@ exports.getBranchInformation = async function (branchName, userName) {
   }
 };
 
+exports.listRepos = async function () {
+  try {
+    const repos = await ghApi.listRepos();
+    return '# Existing repositories\n- ' + repos.join('\n- ');
+  } catch (error) {
+    console.error(error);
+    return `Error: ${error.message}`;
+  }
+};
+
 // -----------------------------------------------------------------------------
 // PULL REQUESTS
 // -----------------------------------------------------------------------------
