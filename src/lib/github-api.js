@@ -185,6 +185,15 @@ async function createPr(repoName, branchName, targetBase, prText, octokit, optio
   }
 }
 
+async function getTargetBranch(targetBase, repoName, octokit) {
+  if (targetBase !== 'master') {
+    return targetBase;
+  }
+
+  const repo = await octokit.request(`GET /repos/${GITHUB_ORG_NAME}/${repoName}`);
+  return repo.data?.default_branch || targetBase;
+}
+
 async function getAllReposBranchInformation(branchName, userName) {
   const reposList = await listRepos();
   const status = await Promise.all(
