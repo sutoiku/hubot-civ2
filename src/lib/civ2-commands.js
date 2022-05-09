@@ -211,10 +211,10 @@ function getBaseUrl() {
 
 async function formatBranchInformation(branchName, status) {
   const result = [];
-  const ptLink = await ghApi.getJiraLink(branchName, { slack: true });
+  const issueLink = await ghApi.getIssueLinkFromBranchName(branchName);
 
-  if (ptLink) {
-    result.push(ptLink);
+  if (issueLink) {
+    result.push(issueLink);
   }
 
   if (Object.keys(status).length === 0) {
