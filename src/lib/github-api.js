@@ -350,7 +350,6 @@ function getIssueLink(repoName, issueNumber) {
   return `https://github.com/sutoiku/${repoName}/issues/${issueNumber}`;
 }
 
-  return link;
 function getIssueLinkFromBranchName(branchName) {
   const { repoName, issueNumber } = getReposAndIssuesId(branchName);
   return getIssueLink(repoName, issueNumber);
@@ -413,23 +412,6 @@ function replaceLinks(repos, links) {
   }
 
   return replaced;
-}
-
-function formatJiraReferences(issueId, references) {
-  const mdLink = `[#${issueId}](${jira.makeLink(issueId)})`;
-  const messageParts = [`Pardon the interruption, but there seems to be some TODOs attached to this issue ${mdLink}. `];
-  for (const [repoName, refs] of Object.entries(references)) {
-    const refList = refs.map(formatRefForList).join('\n');
-    messageParts.push(`In \`${repoName}\` (${refs.length}):\n\n${refList}`);
-  }
-
-  messageParts.push('Did you take care of it ?');
-
-  return messageParts.join('\n\n');
-}
-
-function formatRefForList({ html_url, name }) {
-  return ` * [${name}](${html_url})`;
 }
 
 async function sleep(duration) {
