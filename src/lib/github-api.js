@@ -30,6 +30,7 @@ module.exports = {
   announcePRs,
   commentPtReferences,
   getReposAndIssuesId,
+  getPrTextWithGitHubIssue,
 };
 
 function findMissingPrs(branchInformation) {
@@ -344,15 +345,23 @@ async function getPrText(branchName, userName, repos) {
 }
 
 function getPrTextWithGitHubIssue(branchName) {
+  const prObject = { description: '# Github\n\n ', id: branchName, name: branchName };
   const { repoName, issueNumber } = getReposAndIssuesId(branchName);
-  const description = `# Github\n\n - ${getIssueLink(repoName, issueNumber)}`;
-  return { description, name: branchName, id: `${repoName}-${issueNumber}` };
+
+  if (!repoName || !issueNumber) {
+    prObject.description += 'Github issue not found';
+  } else {
+    prObject.description += `- ${getIssueLink(repoName, issueNumber)}`;
+    prObject.id += `-${repoName}-${issueNumber}`;
+  }
+
+  return prObject;
 }
 
 function getReposAndIssuesId(branchName) {
   const regex = new RegExp(`${REPO_BRANCH_SEPARATOR}([\\w\\.-]*)\\-([0-9]+)`, 'i');
   const matches = regex.exec(branchName);
-  return { repoName: matches[1], issueNumber: matches[2] };
+  return { repoName: matches?.[1], issueNumber: matches?.[2] };
 }
 
 function getIssueLink(repoName, issueNumber) {
