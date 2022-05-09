@@ -100,6 +100,16 @@ exports.getBranchInformation = async function (branchName, userName) {
   }
 };
 
+exports.listRepos = async function () {
+  try {
+    const repos = await ghApi.listRepos();
+    return '# Existing repositories\n- ' + repos.join('\n- ');
+  } catch (error) {
+    console.error(error);
+    return `Error: ${error.message}`;
+  }
+};
+
 // -----------------------------------------------------------------------------
 // PULL REQUESTS
 // -----------------------------------------------------------------------------
@@ -201,10 +211,10 @@ function getBaseUrl() {
 
 async function formatBranchInformation(branchName, status) {
   const result = [];
-  const ptLink = await ghApi.getJiraLink(branchName, { slack: true });
+  const issueLink = await ghApi.getIssueLinkFromBranchName(branchName);
 
-  if (ptLink) {
-    result.push(ptLink);
+  if (issueLink) {
+    result.push(issueLink);
   }
 
   if (Object.keys(status).length === 0) {
@@ -219,7 +229,7 @@ async function formatBranchInformation(branchName, status) {
   }
 
   const mergeableMessage = mergeable
-    ? "\n\nIt seems to be mergeable. It you're done with the PR feedback comments, just ask me `merge pull requests " +
+    ? "\n\nIt seems to be mergeable. It looks like you're done with the PR feedback comments, just ask me `merge pull requests " +
       branchName +
       '` and I will do it for you.'
     : '';

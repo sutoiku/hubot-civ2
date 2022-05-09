@@ -24,7 +24,7 @@ describe('hubot integration', () => {
     });
 
     it('should register 17 listeners', () => {
-      expect(robot.hear).to.have.callCount(17);
+      expect(robot.hear).to.have.callCount(18);
     });
 
     it('should register 0 responder', () => {
@@ -68,42 +68,46 @@ describe('hubot integration', () => {
       expect(robot.hear.getCall(7).args[0].toString()).to.equal(/branch status (\S*)/i.toString());
     });
 
+    it('should register a list repos command', () => {
+      expect(robot.hear.getCall(8).args[0].toString()).to.equal(/list repos/i.toString());
+    });
+
     it('should register a GH token set command', () => {
-      expect(robot.hear.getCall(8).args[0].toString()).to.equal(/my github token is (\S*)/i.toString());
+      expect(robot.hear.getCall(9).args[0].toString()).to.equal(/my github token is (\S*)/i.toString());
     });
 
     it('should register a GH token check command', () => {
-      expect(robot.hear.getCall(9).args[0].toString()).to.equal(/what is my github token\?/i.toString());
+      expect(robot.hear.getCall(10).args[0].toString()).to.equal(/what is my github token\?/i.toString());
     });
 
     it('should register a PR creation command', () => {
-      expect(robot.hear.getCall(10).args[0].toString()).to.equal(/create pull requests (\S*)( to (\S*))?/i.toString());
+      expect(robot.hear.getCall(11).args[0].toString()).to.equal(/create pull requests (\S*)( to (\S*))?/i.toString());
     });
 
     it('should register a PR merge command', () => {
-      expect(robot.hear.getCall(11).args[0].toString()).to.equal(/merge pull requests (\S*)/i.toString());
+      expect(robot.hear.getCall(12).args[0].toString()).to.equal(/merge pull requests (\S*)/i.toString());
     });
 
     it('should register a PR close command', () => {
-      expect(robot.hear.getCall(12).args[0].toString()).to.equal(/close pull requests (\S*)/i.toString());
+      expect(robot.hear.getCall(13).args[0].toString()).to.equal(/close pull requests (\S*)/i.toString());
     });
 
     it('should register a branch deletion command', () => {
-      expect(robot.hear.getCall(13).args[0].toString()).to.equal(/delete branch (\S*)/i.toString());
+      expect(robot.hear.getCall(14).args[0].toString()).to.equal(/delete branch (\S*)/i.toString());
     });
 
     it('should register a link update command', () => {
-      expect(robot.hear.getCall(14).args[0].toString()).to.equal(/update links (\S*)/i.toString());
+      expect(robot.hear.getCall(15).args[0].toString()).to.equal(/update links (\S*)/i.toString());
     });
 
     it('should register a instance update command', () => {
-      expect(robot.hear.getCall(15).args[0].toString()).to.equal(
+      expect(robot.hear.getCall(16).args[0].toString()).to.equal(
         /update instance (\S*)( on (\S*) environment)?( to version (\S*))?/i.toString()
       );
     });
 
     it('should register a public release listener', () => {
-      expect(robot.hear.getCall(16).args[0].toString()).to.equal('/publicly release (\\S*)/i');
+      expect(robot.hear.getCall(17).args[0].toString()).to.equal('/publicly release (\\S*)/i');
     });
   });
 
