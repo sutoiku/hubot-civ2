@@ -9,7 +9,7 @@ const { log } = require('./utils');
 const https = require('https');
 const url = require('url');
 
-const { REPOS_URL = 'https://public.stoic.com/internal/meta/repositories.json' } = process.env;
+const { REPOS_URL = 'https://public.stoic.com/internal/meta/repositories-bot-github.json' } = process.env;
 
 const jira = Jira.initialize();
 const GITHUB_ORG_NAME = 'sutoiku';
