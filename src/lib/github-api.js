@@ -163,7 +163,7 @@ async function createPr(repoName, branchName, targetBase, prText, octokit, optio
     repo: repoName,
     title: branchName,
     head: branchName,
-    base: targetBase,
+    base: await getTargetBranch(targetBase, repoName, octokit),
     body: prText.description,
   });
 
