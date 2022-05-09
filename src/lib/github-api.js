@@ -14,11 +14,11 @@ const { REPOS_URL = 'https://public.stoic.com/internal/meta/repositories.json' }
 const jira = Jira.initialize();
 const GITHUB_ORG_NAME = 'sutoiku';
 const REPOS_MARKER = '# REPOS';
-
+const REPO_BRANCH_SEPARATOR = '!';
 const ONE_MINUTE = 60 * 1e3;
 
 module.exports = {
-  getJiraLink,
+  getIssueLinkFromBranchName,
   getAllReposBranchInformation,
   createMissingPrs,
   deleteBranch,
@@ -29,6 +29,7 @@ module.exports = {
   deleteBranches,
   announcePRs,
   commentPtReferences,
+  getReposAndIssuesId,
 };
 
 function findMissingPrs(branchInformation) {
@@ -329,52 +330,30 @@ async function getPrText(branchName, userName, repos) {
   const key = userName ? await aws.getUserKey(userName, 'github') : null;
   const message = !!key ? '' : `This pull request has been created by ${userName} via the bot.`;
 
-  const trackerDesc = jira && (await getPrTextWithJira(branchName));
-  return trackerDesc || { description: `${message}\n\n# JIRA\nTODO\n\n${REPOS_MARKER}\n\n${strRepos}` };
+  const trackerDesc = await getPrTextWithGitHubIssue(branchName);
+  return trackerDesc || { description: `${message}\n\n# GITHUB\nTODO\n\n${REPOS_MARKER}\n\n${strRepos}` };
 }
 
-async function getPrTextWithJira(branchName) {
-  const issueId = await jira.getIdFromBranchName(branchName);
-
-  if (!issueId) {
-    return null;
-  }
-
-  try {
-    const story = await jira.getStory(issueId);
-    const jiraLink = await getJiraLink(branchName);
-    const description = `# JIRA\n\n${jiraLink}\n\n# Description\n\n${story.description}`;
-    return { description, name: story.name, id: issueId };
-  } catch (err) {
-    console.error(`Error fetching JIRA #${issueId}`, err);
-    return null;
-  }
+function getPrTextWithGitHubIssue(branchName) {
+  const { repoName, issueNumber } = getReposAndIssuesId(branchName);
+  const description = `# Github\n\n - ${getIssueLink(repoName, issueNumber)}`;
+  return { description, name: branchName, id: `${repoName}-${issueNumber}` };
 }
 
-async function getJiraLink(branchName, options) {
-  if (!jira) {
-    return '';
-  }
-
-  const issueId = await jira.getIdFromBranchName(branchName);
-  if (!issueId) {
-    return;
-  }
-
-  const link = jira.makeLink(issueId);
-  return formatLink(`Jira #${issueId}`, link, options);
+function getReposAndIssuesId(branchName) {
+  const regex = new RegExp(`${REPO_BRANCH_SEPARATOR}([\\w\\.-]*)\\-([0-9]+)`, 'i');
+  const matches = regex.exec(branchName);
+  return { repoName: matches[1], issueNumber: matches[2] };
 }
 
-function formatLink(text, link, { markdown = false, slack = false } = {}) {
-  if (markdown) {
-    return `[${text}](${link})`;
-  }
-
-  if (slack) {
-    return `<${link}|${text}>`;
-  }
+function getIssueLink(repoName, issueNumber) {
+  return `https://github.com/sutoiku/${repoName}/issues/${issueNumber}`;
+}
 
   return link;
+function getIssueLinkFromBranchName(branchName) {
+  const { repoName, issueNumber } = getReposAndIssuesId(branchName);
+  return getIssueLink(repoName, issueNumber);
 }
 
 async function getReviews(repo, pr) {
