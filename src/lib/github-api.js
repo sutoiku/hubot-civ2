@@ -14,7 +14,7 @@ const { REPOS_URL = 'https://public.stoic.com/internal/meta/repositories-bot-git
 const jira = Jira.initialize();
 const GITHUB_ORG_NAME = 'sutoiku';
 const REPOS_MARKER = '# REPOS';
-const REPO_BRANCH_SEPARATOR = '!';
+const REPO_BRANCH_SEPARATOR = '__';
 const ONE_MINUTE = 60 * 1e3;
 
 module.exports = {
@@ -359,7 +359,7 @@ function getPrTextWithGitHubIssue(branchName) {
 }
 
 function getReposAndIssuesId(branchName) {
-  const regex = new RegExp(`${REPO_BRANCH_SEPARATOR}([\\w\\.-]*)\\-([0-9]+)`, 'i');
+  const regex = new RegExp(`${REPO_BRANCH_SEPARATOR}([A-z\\.-]*)\\-([0-9]+)`, 'i');
   const matches = regex.exec(branchName);
   return { repoName: matches?.[1], issueNumber: matches?.[2] };
 }
