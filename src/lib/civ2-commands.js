@@ -211,10 +211,12 @@ function getBaseUrl() {
 
 async function formatBranchInformation(branchName, status) {
   const result = [];
-  const issueLink = await ghApi.getIssueLinkFromBranchName(branchName);
+  const issueLinks = await ghApi.getIssueLinksFromBranchName(branchName);
 
-  if (issueLink) {
-    result.push(issueLink);
+  if (issueLinks.length !== 0) {
+    for (const link of issueLinks) {
+      result.push("- " + link);
+    }
   }
 
   if (Object.keys(status).length === 0) {
