@@ -168,14 +168,6 @@ async function createPr(repoName, branchName, targetBase, prText, octokit, optio
     body: prText.description,
   });
 
-  if (prText.name) {
-    prSpec.title = prText.name;
-  }
-
-  if (prSpec.id) {
-    prSpec.title = `[${prSpec.id}] ${prSpec.title}`;
-  }
-
   try {
     const response = await octokit.pulls.create(prSpec);
     return Object.assign({ repo: { name: repoName } }, response ? response.data : {});
