@@ -63,14 +63,6 @@ describe('Github API helpers', () => {
           name: 'fix/my-branch__praxis-42__particula-12',
         },
       },
-      {
-        input: 'test/pl__Components.stoic-52__Components.stoic-47',
-        expectation: {
-          description: '# Github\n\n - https://github.com/sutoiku/praxis/issues/42\n - https://github.com/sutoiku/particula/issues/12',
-          id: 'test/pl__Components.stoic-52__Components.stoic-47-Components.stoic-52-Components.stoic-42',
-          name: 'test/pl__Components.stoic-52__Components.stoic-47',
-        },
-      },
     ];
 
     for (const { input, expectation } of scenarios) {
