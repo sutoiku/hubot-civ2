@@ -162,7 +162,7 @@ async function createPr(repoName, branchName, targetBase, prText, octokit, optio
   const prSpec = Object.assign(options, {
     owner: GITHUB_ORG_NAME,
     repo: repoName,
-    title: branchName,
+    title: await getIssueTitle(branchName, octokit) || branchName,
     head: branchName,
     base: await getTargetBranch(targetBase, repoName, octokit),
     body: prText.description,
@@ -193,6 +193,17 @@ async function getTargetBranch(targetBase, repoName, octokit) {
 
   const repo = await octokit.request(`GET /repos/${GITHUB_ORG_NAME}/${repoName}`);
   return repo.data?.default_branch || targetBase;
+}
+
+async function getIssueTitle(branchName, octokit) {
+  const infos = getReposAndIssuesId(branchName);
+  if (infos.length === 0) {
+    return branchName;
+  }
+
+  const {repoName, issueNumber} = infos[0];
+  const issue = await octokit.request(`GET /repos/${GITHUB_ORG_NAME}/${repoName}/issues/${issueNumber}`);
+  return issue.data?.title;
 }
 
 async function getAllReposBranchInformation(branchName, userName) {
