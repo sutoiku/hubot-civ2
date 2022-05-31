@@ -211,15 +211,21 @@ function getBaseUrl() {
 
 async function formatBranchInformation(branchName, status) {
   const result = [];
-  const issueLink = await ghApi.getIssueLinkFromBranchName(branchName);
+  const issueLinks = await ghApi.getIssueLinksFromBranchName(branchName);
 
-  if (issueLink) {
-    result.push(issueLink);
+  if (issueLinks.length !== 0) {
+    result.push("*Found issues: *");
+
+    for (const link of issueLinks) {
+      result.push("- " + link);
+    }
   }
 
   if (Object.keys(status).length === 0) {
     return `Branch "${branchName}" was not found on the product repositories`;
   }
+
+  result.push("\n *Opened PRs: *");
 
   let mergeable = true;
   for (const [repo, data] of Object.entries(status)) {

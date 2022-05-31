@@ -18,7 +18,7 @@ const REPO_BRANCH_SEPARATOR = '__';
 const ONE_MINUTE = 60 * 1e3;
 
 module.exports = {
-  getIssueLinkFromBranchName,
+  getIssueLinksFromBranchName,
   getAllReposBranchInformation,
   createMissingPrs,
   deleteBranch,
@@ -162,19 +162,11 @@ async function createPr(repoName, branchName, targetBase, prText, octokit, optio
   const prSpec = Object.assign(options, {
     owner: GITHUB_ORG_NAME,
     repo: repoName,
-    title: branchName,
+    title: await getIssueTitle(branchName, octokit) || branchName,
     head: branchName,
     base: await getTargetBranch(targetBase, repoName, octokit),
     body: prText.description,
   });
-
-  if (prText.name) {
-    prSpec.title = prText.name;
-  }
-
-  if (prSpec.id) {
-    prSpec.title = `[${prSpec.id}] ${prSpec.title}`;
-  }
 
   try {
     const response = await octokit.pulls.create(prSpec);
@@ -193,6 +185,18 @@ async function getTargetBranch(targetBase, repoName, octokit) {
 
   const repo = await octokit.request(`GET /repos/${GITHUB_ORG_NAME}/${repoName}`);
   return repo.data?.default_branch || targetBase;
+}
+
+async function getIssueTitle(branchName, octokit) {
+  const infos = getReposAndIssuesId(branchName);
+
+  if (infos.length === 1) {
+    const {repoName, issueNumber} = infos[0];
+    const issue = await octokit.request(`GET /repos/${GITHUB_ORG_NAME}/${repoName}/issues/${issueNumber}`);
+    return issue.data?.title;
+  } else {
+    return branchName;
+  }
 }
 
 async function getAllReposBranchInformation(branchName, userName) {
@@ -345,13 +349,16 @@ async function getPrText(branchName, userName, repos) {
 }
 
 function getPrTextWithGitHubIssue(branchName) {
-  const prObject = { description: '# Github\n\n ', id: branchName, name: branchName };
-  const { repoName, issueNumber } = getReposAndIssuesId(branchName);
+  const prObject = { description: '# Issues\n', id: branchName, name: branchName };
+  const infos = getReposAndIssuesId(branchName);
 
-  if (!repoName || !issueNumber) {
-    prObject.description += 'Github issue not found';
-  } else {
-    prObject.description += `- ${getIssueLink(repoName, issueNumber)}`;
+  if (infos.length === 0) {
+    prObject.description += '\n Github issue not found';
+    return prObject;
+  }
+
+  for (const {repoName, issueNumber} of infos) {
+    prObject.description += `\n - ${getIssueLink(repoName, issueNumber)}`;
     prObject.id += `-${repoName}-${issueNumber}`;
   }
 
@@ -359,18 +366,29 @@ function getPrTextWithGitHubIssue(branchName) {
 }
 
 function getReposAndIssuesId(branchName) {
-  const regex = new RegExp(`${REPO_BRANCH_SEPARATOR}([A-z\\.-]*)\\-([0-9]+)`, 'i');
-  const matches = regex.exec(branchName);
-  return { repoName: matches?.[1], issueNumber: matches?.[2] };
+  const regex = new RegExp(`${REPO_BRANCH_SEPARATOR}([A-z\\.-]*)\\-([0-9]+)`, 'igm');
+  const matches = branchName.match(regex) || []; // In the form (__{repoName}-{issueNumber});
+  
+  const repoAndIssueNumberlist = [];
+  for (const match of matches) {
+    const [repoName, issueNumber] = match.split('-');
+    repoAndIssueNumberlist.push({ repoName: repoName.replace(REPO_BRANCH_SEPARATOR, ''), issueNumber});
+  }
+
+  return repoAndIssueNumberlist;
 }
 
 function getIssueLink(repoName, issueNumber) {
   return `https://github.com/sutoiku/${repoName}/issues/${issueNumber}`;
 }
 
-function getIssueLinkFromBranchName(branchName) {
-  const { repoName, issueNumber } = getReposAndIssuesId(branchName);
-  return getIssueLink(repoName, issueNumber);
+function getIssueLinksFromBranchName(branchName) {
+  const infos = getReposAndIssuesId(branchName);
+  const links = [];
+  for (const {repoName, issueNumber} of infos) {
+    links.push(getIssueLink(repoName, issueNumber));
+  }
+  return links;
 }
 
 async function getReviews(repo, pr) {

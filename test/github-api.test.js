@@ -6,19 +6,19 @@ describe('Github API helpers', () => {
     const scenarios = [
       {
         input: 'bug/test__components.stoic-33',
-        expectation: { repoName: 'components.stoic', issueNumber: '33' },
+        expectation: [{ repoName: 'components.stoic', issueNumber: '33' }],
       },
       {
         input: 'branch/test',
-        expectation: { repoName: undefined, issueNumber: undefined },
+        expectation: [],
       },
       {
         input: 'branch/test__kyu',
-        expectation: { repoName: undefined, issueNumber: undefined },
+        expectation: [],
       },
       {
         input: 'fix/my-branch__praxis-42__particula-12',
-        expectation: { repoName: 'praxis', issueNumber: '42' },
+        expectation: [{ repoName: 'praxis', issueNumber: '42' }, { repoName: 'particula', issueNumber: '12' }],
       },
     ];
 
@@ -58,8 +58,8 @@ describe('Github API helpers', () => {
       {
         input: 'fix/my-branch__praxis-42__particula-12',
         expectation: {
-          description: '# Github\n\n - https://github.com/sutoiku/praxis/issues/42',
-          id: 'fix/my-branch__praxis-42__particula-12-praxis-42',
+          description: '# Github\n\n - https://github.com/sutoiku/praxis/issues/42\n - https://github.com/sutoiku/particula/issues/12',
+          id: 'fix/my-branch__praxis-42__particula-12-praxis-42-particula-12',
           name: 'fix/my-branch__praxis-42__particula-12',
         },
       },
