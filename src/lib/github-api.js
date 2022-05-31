@@ -189,13 +189,14 @@ async function getTargetBranch(targetBase, repoName, octokit) {
 
 async function getIssueTitle(branchName, octokit) {
   const infos = getReposAndIssuesId(branchName);
-  if (infos.length === 0) {
+
+  if (infos.length === 1) {
+    const {repoName, issueNumber} = infos[0];
+    const issue = await octokit.request(`GET /repos/${GITHUB_ORG_NAME}/${repoName}/issues/${issueNumber}`);
+    return issue.data?.title;
+  } else {
     return branchName;
   }
-
-  const {repoName, issueNumber} = infos[0];
-  const issue = await octokit.request(`GET /repos/${GITHUB_ORG_NAME}/${repoName}/issues/${issueNumber}`);
-  return issue.data?.title;
 }
 
 async function getAllReposBranchInformation(branchName, userName) {
@@ -348,7 +349,7 @@ async function getPrText(branchName, userName, repos) {
 }
 
 function getPrTextWithGitHubIssue(branchName) {
-  const prObject = { description: '# Github\n', id: branchName, name: branchName };
+  const prObject = { description: '# Issues\n', id: branchName, name: branchName };
   const infos = getReposAndIssuesId(branchName);
 
   if (infos.length === 0) {
