@@ -18,7 +18,10 @@ describe('Github API helpers', () => {
       },
       {
         input: 'fix/my-branch__praxis-42__particula-12',
-        expectation: [{ repoName: 'praxis', issueNumber: '42' }, { repoName: 'particula', issueNumber: '12' }],
+        expectation: [
+          { repoName: 'praxis', issueNumber: '42' },
+          { repoName: 'particula', issueNumber: '12' },
+        ],
       },
     ];
 
@@ -34,7 +37,7 @@ describe('Github API helpers', () => {
       {
         input: 'bug/test__components.stoic-33',
         expectation: {
-          description: '# Github\n\n - https://github.com/sutoiku/components.stoic/issues/33',
+          description: '# Issues\n\n - https://github.com/sutoiku/components.stoic/issues/33',
           id: 'bug/test__components.stoic-33-components.stoic-33',
           name: 'bug/test__components.stoic-33',
         },
@@ -42,7 +45,7 @@ describe('Github API helpers', () => {
       {
         input: 'branch/test',
         expectation: {
-          description: '# Github\n\n Github issue not found',
+          description: '# Issues\n\n Github issue not found',
           id: 'branch/test',
           name: 'branch/test',
         },
@@ -50,7 +53,7 @@ describe('Github API helpers', () => {
       {
         input: 'branch/test__kyu',
         expectation: {
-          description: '# Github\n\n Github issue not found',
+          description: '# Issues\n\n Github issue not found',
           id: 'branch/test__kyu',
           name: 'branch/test__kyu',
         },
@@ -58,7 +61,8 @@ describe('Github API helpers', () => {
       {
         input: 'fix/my-branch__praxis-42__particula-12',
         expectation: {
-          description: '# Github\n\n - https://github.com/sutoiku/praxis/issues/42\n - https://github.com/sutoiku/particula/issues/12',
+          description:
+            '# Issues\n\n - https://github.com/sutoiku/praxis/issues/42\n - https://github.com/sutoiku/particula/issues/12',
           id: 'fix/my-branch__praxis-42__particula-12-praxis-42-particula-12',
           name: 'fix/my-branch__praxis-42__particula-12',
         },
