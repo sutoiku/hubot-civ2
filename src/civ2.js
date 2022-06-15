@@ -121,7 +121,7 @@ module.exports = function (robot) {
   robot.hear(
     /list repos/i,
     responderFactory(async (msg) => {
-      const message = await civ2.listRepos(msg.message.user.name);
+      const message = civ2.listRepos();
       msg.reply(message);
     })
   );

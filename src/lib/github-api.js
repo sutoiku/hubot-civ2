@@ -5,8 +5,7 @@ const { Octokit } = require('@octokit/rest');
 const aws = require('./aws');
 const { log } = require('./utils');
 
-
-const { REPOS_URL = 'https://public.stoic.com/internal/meta/repositories-bot-github.json' } = process.env;
+const REPOS = ["core.stoic","fermat","kyu","praxis","principia","stoic-duckdb","stoic-io","team","demos.stoic","marcus","particula","lorem","pictura","grid","librarium","stoic-kubernetes","Utilities.stoic","Components.stoic","Datatypes.stoic","Transforms.stoic","AWS.stoic","Worker.stoic","Playground.stoic","Visuals.stoic","Transformations.stoic","Engine.stoic"];
 const GITHUB_ORG_NAME = 'sutoiku';
 const REPOS_MARKER = '# REPOS';
 const REPO_BRANCH_SEPARATOR = '__';
@@ -193,7 +192,7 @@ async function getIssueTitle(branchName, octokit) {
 }
 
 async function getAllReposBranchInformation(branchName, userName) {
-  const reposList = await listRepos();
+  const reposList = listRepos();
   const status = await Promise.all(
     reposList.map(async (repoName) => {
       const repo = gh.getRepo(GITHUB_ORG_NAME, repoName);
@@ -374,10 +373,5 @@ function replaceLinks(repos, links) {
 
 
 async function listRepos() {
-  const parsedUrl = url.parse(REPOS_URL);
-  const jsonFile = await request(parsedUrl);
-
-  return Object.keys(jsonFile.repositories);
-}
-
+  return REPOS;
 }
