@@ -1,4 +1,3 @@
-const Jira = require('./jira');
 const GitHub = require('github-api');
 const { GITHUB_TOKEN } = process.env;
 const gh = new GitHub({ token: GITHUB_TOKEN });
@@ -6,16 +5,11 @@ const { Octokit } = require('@octokit/rest');
 const aws = require('./aws');
 const { log } = require('./utils');
 
-const https = require('https');
-const url = require('url');
 
 const { REPOS_URL = 'https://public.stoic.com/internal/meta/repositories-bot-github.json' } = process.env;
-
-const jira = Jira.initialize();
 const GITHUB_ORG_NAME = 'sutoiku';
 const REPOS_MARKER = '# REPOS';
 const REPO_BRANCH_SEPARATOR = '__';
-const ONE_MINUTE = 60 * 1e3;
 
 module.exports = {
   getIssueLinksFromBranchName,
@@ -28,7 +22,6 @@ module.exports = {
   updatePRsDescriptions,
   deleteBranches,
   announcePRs,
-  commentPtReferences,
   getReposAndIssuesId,
   getPrTextWithGitHubIssue,
 };
@@ -264,77 +257,6 @@ async function deleteBranches(branchName, userName) {
   return deleted;
 }
 
-async function addCommentPrReview(repos, body) {
-  const octokit = await getOctokit();
-  const commentPromises = [];
-  for (const [repoName, repo] of Object.entries(repos)) {
-    commentPromises.push(
-      octokit.pulls.createReview({
-        owner: GITHUB_ORG_NAME,
-        repo: repoName,
-        pull_number: repo.pr.number,
-        body,
-        event: 'COMMENT',
-      })
-    );
-  }
-
-  return Promise.all(commentPromises);
-}
-
-async function commentPtReferences(branchName) {
-  if (!jira) {
-    return null;
-  }
-
-  const issueId = await jira.getIdFromBranchName(branchName);
-  if (!issueId) {
-    return null;
-  }
-
-  const issueReferences = await searchIssueInAllRepos(issueId);
-  if (!issueReferences) {
-    return null;
-  }
-
-  const message = formatJiraReferences(issueId, issueReferences);
-  const repos = await getAllReposBranchInformation(branchName);
-  // Let's add the comment in only 1 of the repos, no spam.
-  const firstRepoName = Object.keys(repos)[0];
-  return addCommentPrReview({ [firstRepoName]: repos[firstRepoName] }, message);
-}
-
-async function searchIssueInAllRepos(ptId, retryCount = 0) {
-  try {
-    return await doSearchIssueInAllRepos(ptId);
-  } catch (err) {
-    if (err.message.includes('API rate limit exceeded') && retryCount < 5) {
-      await sleep(ONE_MINUTE);
-      return searchIssueInAllRepos(ptId, retryCount + 1);
-    }
-
-    throw err;
-  }
-}
-
-async function doSearchIssueInAllRepos(issueId) {
-  const octokit = await getOctokit();
-  const q = `${issueId}+org:${GITHUB_ORG_NAME}`;
-
-  const { data } = await octokit.search.code({ q });
-  if (!data || data.total_count === 0) {
-    return null;
-  }
-
-  const resultsPerRepo = {};
-  for (const item of data.items) {
-    const repoName = item.repository.name;
-    resultsPerRepo[repoName] = resultsPerRepo[repoName] || [];
-    resultsPerRepo[repoName].push(item);
-  }
-  return resultsPerRepo;
-}
-
 // -----------------------------------------------------------------------------
 // HELPERS
 // -----------------------------------------------------------------------------
@@ -450,9 +372,6 @@ function replaceLinks(repos, links) {
   return replaced;
 }
 
-async function sleep(duration) {
-  return new Promise((resolve) => setTimeout(resolve, duration));
-}
 
 async function listRepos() {
   const parsedUrl = url.parse(REPOS_URL);
@@ -461,22 +380,4 @@ async function listRepos() {
   return Object.keys(jsonFile.repositories);
 }
 
-// -----------------------------------------------------------------------------
-// HTTPS
-// -----------------------------------------------------------------------------
-
-async function request(params) {
-  return new Promise((resolve, reject) => {
-    https.request(params, (res) => parseHttpRes(res, resolve, reject)).end();
-  });
-}
-
-function parseHttpRes(res, resolve, reject) {
-  const chunks = [];
-  res.on('error', reject);
-  res.on('data', (chunk) => chunks.push(chunk));
-  res.on('end', () => {
-    const res = JSON.parse(Buffer.concat(chunks).toString());
-    return res && res.error ? reject(res.error) : resolve(res);
-  });
 }
