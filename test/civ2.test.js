@@ -201,6 +201,15 @@ describe('hubot integration', () => {
           ));
       });
 
+      describe('List repos', () => {
+        it('should call list repos', async () =>
+          expectCiv2CommandCall(
+            'list repos',
+            [{ command: 'listRepos', expectedArgs: [] }],
+            [{ method: 'reply', args: ['SPY:listRepos'] }]
+          ));
+      });
+
       describe('PR creation', () => {
         it('should create pr creation and report status with default parameters', async () =>
           expectCiv2CommandCall(
@@ -516,18 +525,6 @@ describe('hubot integration', () => {
             const response = await hubotMock.httpCall('/hubot/civ2/github-webhook', DEFAULT_OPEN_PAYLOAD);
             expect(hubotMock._messageRoom).to.deep.equal([]);
             expect(response).to.equal('OK');
-          });
-
-          it('should report failures', async () => {
-            const response = await hubotMock.httpCall('/hubot/civ2/github-webhook', DEFAULT_OPEN_PAYLOAD);
-            expect(hubotMock._messageRoom).to.deep.equal([
-              {
-                msg: 'An error occured while looking for references in "feature/toto": Error: Oops',
-                channel: '#testing-ci',
-              },
-            ]);
-            expect(response).to.equal('Error');
-            expect(hubotMock._statusCode).to.equal(500);
           });
 
           it('should fire only once per branch', async () => {
