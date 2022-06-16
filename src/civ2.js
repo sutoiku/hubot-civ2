@@ -34,7 +34,6 @@ const routes = require('./lib/routes');
 const gh = require('./lib/github');
 const aws = require('./lib/aws');
 const { log, logError } = require('./lib/utils');
-const Jira = require('./lib/jira');
 
 const REPLICATED_STABLE_CHANNEL = 'Stable';
 const DEMO = { url: 'demo.stoic.cc', name: 'demo' };
@@ -122,7 +121,7 @@ module.exports = function (robot) {
   robot.hear(
     /list repos/i,
     responderFactory(async (msg) => {
-      const message = await civ2.listRepos(msg.message.user.name);
+      const message = civ2.listRepos();
       msg.reply(message);
     })
   );
@@ -286,7 +285,6 @@ module.exports = function (robot) {
 
     try {
       parsedPrs.set(pr.branch, { when: Date.now() });
-      await civ2.commentPtReferences(pr.branch);
       cleanPrMap(parsedPrs);
       res.send('OK');
       return true;
@@ -359,11 +357,6 @@ async function announcePrMerge(branch, robot, base, mergedPRs, res) {
   try {
     mergedPRs.set(branch, { when: Date.now() });
 
-    const jiraDescription = await generateBranchJiraDescription(branch);
-    if (jiraDescription) {
-      text.push(jiraDescription);
-    }
-
     robot.messageRoom(CHANNELS.releaseCandidates, text.join('\n'));
     cleanPrMap(mergedPRs);
     return true;
@@ -389,20 +382,6 @@ function inferIconFromBranchName(branch) {
       return ':test_tube: ';
     default:
       return '';
-  }
-}
-
-async function generateBranchJiraDescription(branch) {
-  const jira = Jira.initialize();
-  if (!jira) {
-    return;
-  }
-
-  const issueId = await jira.getIdFromBranchName(branch);
-  if (issueId) {
-    const issue = await jira.getStory(issueId);
-    const issueLink = jira.makeLink(issueId);
-    return `It implements Jira issue <${issueLink}|#${issue.id} (${issue.name})>.`;
   }
 }
 

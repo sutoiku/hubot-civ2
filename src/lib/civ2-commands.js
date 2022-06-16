@@ -1,7 +1,6 @@
 const rp = require('request-promise');
 const Jenkins = require('jenkins');
 const ghApi = require('./github-api');
-const Jira = require('./jira');
 
 const REQUIRED_STATUS = new Set(['linting', 'unit-tests', 'stoic-assemble', 'stoic-integration-tests']);
 const REVIEW_ICONS = { PENDING: '🟡', COMMENTED: '⚪', APPROVED: '✔️', REQUEST_CHANGES: '❌' };
@@ -40,17 +39,6 @@ exports.updateInstance = async function (receivedDomain, env, requestedVersion) 
 exports.release = function (tag, UpdatePivotalAndGitHub) {
   const additionalParameters = UpdatePivotalAndGitHub ? { UpdatePivotalAndGitHub } : undefined;
   return buildJob('Release/global-release', tag, additionalParameters);
-};
-
-exports.triggerJiraRelease = async function (projectKey, releaseName) {
-  const jira = Jira.initialize();
-  const version = await jira.createNewVersion(projectKey, releaseName);
-  const issues = await jira.listIssuesToRelease(projectKey);
-
-  await jira.setIssuesVersion(issues, version.id);
-  await jira.releaseVersion(version.id);
-  const releaseUrl = `https://${jira.host}/projects/${projectKey}/versions/${version.id}/tab/release-report-warnings`;
-  return { releaseName, releaseUrl, versionId: version.id, version };
 };
 
 // -----------------------------------------------------------------------------
@@ -151,10 +139,6 @@ exports.announcePRs = async function (brancName, text) {
 
 exports.updatePRsDescriptions = async function (branchName, userName) {
   return ghApi.updatePRsDescriptions(branchName, userName);
-};
-
-exports.commentPtReferences = async function (branchName) {
-  return ghApi.commentPtReferences(branchName);
 };
 
 exports.getLatestVersion = async function (instance = 'latest') {
