@@ -5,7 +5,34 @@ const { Octokit } = require('@octokit/rest');
 const aws = require('./aws');
 const { log } = require('./utils');
 
-const REPOS = ["core.stoic","fermat","kyu","praxis","principia","stoic-duckdb","stoic-io","team","demos.stoic","marcus","particula","lorem","pictura","grid","librarium","stoic-kubernetes","Utilities.stoic","Components.stoic","Datatypes.stoic","Transforms.stoic","AWS.stoic","Worker.stoic","Playground.stoic","Visuals.stoic","Transformations.stoic","Engine.stoic"];
+const REPOS = [
+  'core.stoic',
+  'fermat',
+  'kyu',
+  'praxis',
+  'principia',
+  'stoic-duckdb',
+  'stoic-io',
+  'team',
+  'demos.stoic',
+  'marcus',
+  'particula',
+  'lorem',
+  'pictura',
+  'grid',
+  'librarium',
+  'stoic-kubernetes',
+  'Utilities.stoic',
+  'Components.stoic',
+  'Datatypes.stoic',
+  'Transforms.stoic',
+  'AWS.stoic',
+  'Worker.stoic',
+  'Playground.stoic',
+  'Visuals.stoic',
+  'Transformations.stoic',
+  'Engine.stoic',
+];
 const GITHUB_ORG_NAME = 'sutoiku';
 const REPOS_MARKER = '# REPOS';
 const REPO_BRANCH_SEPARATOR = '__';
@@ -154,7 +181,7 @@ async function createPr(repoName, branchName, targetBase, prText, octokit, optio
   const prSpec = Object.assign(options, {
     owner: GITHUB_ORG_NAME,
     repo: repoName,
-    title: await getIssueTitle(branchName, octokit) || branchName,
+    title: (await getIssueTitle(branchName, octokit)) || branchName,
     head: branchName,
     base: await getTargetBranch(targetBase, repoName, octokit),
     body: prText.description,
@@ -183,7 +210,7 @@ async function getIssueTitle(branchName, octokit) {
   const infos = getReposAndIssuesId(branchName);
 
   if (infos.length === 1) {
-    const {repoName, issueNumber} = infos[0];
+    const { repoName, issueNumber } = infos[0];
     const issue = await octokit.request(`GET /repos/${GITHUB_ORG_NAME}/${repoName}/issues/${issueNumber}`);
     return issue.data?.title;
   } else {
@@ -278,7 +305,7 @@ function getPrTextWithGitHubIssue(branchName) {
     return prObject;
   }
 
-  for (const {repoName, issueNumber} of infos) {
+  for (const { repoName, issueNumber } of infos) {
     prObject.description += `\n - ${getIssueLink(repoName, issueNumber)}`;
     prObject.id += `-${repoName}-${issueNumber}`;
   }
@@ -289,11 +316,11 @@ function getPrTextWithGitHubIssue(branchName) {
 function getReposAndIssuesId(branchName) {
   const regex = new RegExp(`${REPO_BRANCH_SEPARATOR}([A-z\\.-]*)\\-([0-9]+)`, 'igm');
   const matches = branchName.match(regex) || []; // In the form (__{repoName}-{issueNumber});
-  
+
   const repoAndIssueNumberlist = [];
   for (const match of matches) {
     const [repoName, issueNumber] = match.split('-');
-    repoAndIssueNumberlist.push({ repoName: repoName.replace(REPO_BRANCH_SEPARATOR, ''), issueNumber});
+    repoAndIssueNumberlist.push({ repoName: repoName.replace(REPO_BRANCH_SEPARATOR, ''), issueNumber });
   }
 
   return repoAndIssueNumberlist;
@@ -306,7 +333,7 @@ function getIssueLink(repoName, issueNumber) {
 function getIssueLinksFromBranchName(branchName) {
   const infos = getReposAndIssuesId(branchName);
   const links = [];
-  for (const {repoName, issueNumber} of infos) {
+  for (const { repoName, issueNumber } of infos) {
     links.push(getIssueLink(repoName, issueNumber));
   }
   return links;
@@ -370,7 +397,6 @@ function replaceLinks(repos, links) {
 
   return replaced;
 }
-
 
 async function listRepos() {
   return REPOS;
