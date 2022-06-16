@@ -398,6 +398,6 @@ function replaceLinks(repos, links) {
   return replaced;
 }
 
-async function listRepos() {
+function listRepos() {
   return REPOS;
 }
